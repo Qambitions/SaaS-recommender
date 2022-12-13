@@ -32,164 +32,181 @@ class ImportInfo(models.Model):
     source_name = models.CharField(max_length=200, null=True, blank=True)
     import_date = models.DateTimeField(auto_now_add=True)
 
+# Customer
+class Customer(models.Model):
+    id = models.AutoField(primary_key=True)
+    cus_id = models.CharField(max_length=50, null=True, blank=True)
+    ip_address = models.CharField(max_length=50, null=True, blank=True)
+    email = models.CharField(max_length=50, null=True, blank=True)
+    first_name = models.CharField(max_length=50, null=True, blank=True)
+    last_name = models.CharField(max_length=50, null=True, blank=True)
+    username = models.CharField(max_length=30, null=True, blank=True)
+    phone = models.CharField(max_length=10, null=True, blank=True)
+
+
+class CustomerProfile(models.Model):
+    cus_id = models.CharField(max_length=50, null=True, blank=True, primary_key=True)
+    dob = models.DateTimeField(null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=(
+        ('male', 'male'), ('female', 'female')))
+    city = models.CharField(max_length=150, null=True, blank=True)
+    country = models.CharField(max_length=150, null=True, blank=True)
+
+# New_product:
+class Product(models.Model):
+    id = models.AutoField(primary_key=True)
+    prod_id = models.CharField(max_length=50, unique=True)
+    prod_name = models.CharField(max_length=150, null=True, blank=True)
+    category = models.CharField(max_length=150, null=True, blank=True)
+    current_price = models.IntegerField(null=True, blank=True)
+    url = models.CharField(max_length=150, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+   
+# Session
+class Session(models.Model):
+    id = models.AutoField(primary_key=True)
+    session_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    customer_id = models.CharField(max_length=50, null=True, blank=True)
+    
+
 # New_event:
 class Events(models.Model):
     id = models.AutoField(primary_key=True)
     event_id = models.CharField(max_length=150, unique=True)
-    event_name = models.CharField(max_length=150, null=True, blank=True)
-    event_title = models.CharField(max_length=150, null=True, blank=True)
     event_type = models.CharField(max_length=150, null=True, blank=True)
-    event_price = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True)
-    price_type = models.CharField(max_length=50, null=True, blank=True)
-    slug = models.CharField(max_length=150, null=True, blank=True)
-    lang = models.CharField(max_length=150, null=True, blank=True)
-    img = models.CharField(max_length=150, null=True, blank=True)
-    url = models.CharField(max_length=150, null=True, blank=True)
-    location_name = models.CharField(max_length=150, null=True, blank=True)
-    location_address = models.CharField(max_length=150, null=True, blank=True)
-    location_city = models.CharField(max_length=50, null=True, blank=True)
-    location_state = models.CharField(max_length=50, null=True, blank=True)
-    location_country = models.CharField(max_length=50, null=True, blank=True)
-    location_zipcode = models.CharField(max_length=50, null=True, blank=True)
-    is_public = models.CharField(max_length=10, choices=(
-        ('True', True), ('False', False)), default='True')
-    status = models.CharField(max_length=30, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
-    modified_at = models.DateTimeField(auto_now=True, null=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
-    
-class EventDate(models.Model):
-    id = models.AutoField(primary_key=True)
-    event_id = models.CharField(max_length=150, null=True, blank=True)
-    date = models.DateTimeField(null=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
-    
+    event_status = models.CharField(max_length=30, null=True, blank=True)
+    session_id = models.CharField(max_length=50, null=True, blank=True)
+    sent_at = models.DateTimeField(auto_now_add=True, null=True)
 
-# New_product:
-
-class Products(models.Model):
-    id = models.AutoField(primary_key=True)
-    product_id = models.CharField(max_length=150, unique=True)
-    product_name = models.CharField(max_length=150, null=True, blank=True)
-    product_type = models.CharField(max_length=150, choices=(('Musées','Musées'), ('Arts de la scène','Arts de la scène'), ('Littérature','Littérature'), ('Arts visuels','Arts visuels'), ('Arts médiatiques','Arts médiatiques'), ("Métiers d'art", "Métiers d'art"), ('Patrimoine','Patrimoine'), ('Autres','Autres')), default='Autres', null=True, blank=True)
-    product_price = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True)
-    product_revenue = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True)
-    price_type = models.CharField(max_length=50, null=True, blank=True)
-    is_public = models.CharField(max_length=10, choices=(
-        ('True', True), ('False', False)), default='True')
-    status = models.CharField(max_length=30, null=True, blank=True)
-    slug = models.CharField(max_length=150, null=True, blank=True)
-    img = models.CharField(max_length=150, null=True, blank=True)
-    url = models.CharField(max_length=150, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
-    modified_at = models.DateTimeField(auto_now=True, null=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
-
-
-# BusinessEntity
-
-class BusinessEntity(models.Model):
-    id = models.AutoField(primary_key=True)
-    entity_id = models.CharField(max_length=50, null=True, blank=True)
-    entity_name = models.CharField(max_length=50, null=True, blank=True)
-    slug = models.CharField(max_length=150, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
-    modified_at = models.DateTimeField(auto_now=True, null=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
-
-
-# EntityEventRole
-
-class EntityEventRole(models.Model):
-    id = models.AutoField(primary_key=True)
-    entity_id = models.CharField(max_length=50, null=True, blank=True)
-    event_id = models.CharField(max_length=50, null=True, blank=True)
-    role_name = models.CharField(max_length=50, null=True, blank=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
-    
-    
-# EntityProductRole
-
-class EntityProductRole(models.Model):
-    id = models.AutoField(primary_key=True)
-    entity_id = models.CharField(max_length=50, null=True, blank=True)
-    product_id = models.CharField(max_length=50, null=True, blank=True)
-    role_name = models.CharField(max_length=50, null=True, blank=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
-
-
-# EventSimilarity
-
-class EventSimilarity(models.Model):
-    id = models.AutoField(primary_key=True)
-    source_id = models.CharField(max_length=50, null=True, blank=True)
-    target_id = models.CharField(max_length=50, null=True, blank=True)
-    similarity = models.DecimalField(max_digits=5, decimal_places=2)
-    algo = models.CharField(max_length=50, null=True, blank=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
+class EventItem(models.Model):
+    event_id = models.CharField(max_length=150)
+    prod_id = models.CharField(max_length=50)
+    quantity = models.IntegerField(null=False)
+    price = models.IntegerField(null=False)
 
 
 # ProductSimilarity
+class SimilarProduct(models.Model):
+    prod_id1 = models.CharField(max_length=50, null=True, blank=True)
+    prod_id2 = models.CharField(max_length=50, null=True, blank=True)
+    compatibility = models.DecimalField(max_digits=5, decimal_places=2)
 
-class ProductSimilarity(models.Model):
-    id = models.AutoField(primary_key=True)
-    source_id = models.CharField(max_length=50, null=True, blank=True)
-    target_id = models.CharField(max_length=50, null=True, blank=True)
-    similarity = models.DecimalField(max_digits=5, decimal_places=2)
-    algo = models.CharField(max_length=50, null=True, blank=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
+# CustomerSimilarity
+class SimilarCustomer(models.Model):
+    cus_id1 = models.CharField(max_length=50, null=True, blank=True)
+    cus_id2 = models.CharField(max_length=50, null=True, blank=True)
+    compatibility = models.DecimalField(max_digits=5, decimal_places=2)
 
 
-# Interaction
 
-class Interaction_f(models.Model):
-    id = models.AutoField(primary_key=True)
-    interaction_id = models.CharField(max_length=50, null=True, blank=True)
-    session_id = models.CharField(max_length=50, null=True, blank=True)
-    visitor_id = models.CharField(max_length=50, null=True, blank=True)
-    customer_id = models.CharField(max_length=50, null=True, blank=True)
-    visit_date = models.DateField(null=True, blank=True)
-    visit_timestamp = models.IntegerField(null=True, blank=True)
-    operating_system = models.CharField(max_length=150, null=True, blank=True)
-    device_category = models.CharField(max_length=150, null=True, blank=True)
-    browser = models.CharField(max_length=150, null=True, blank=True)
-    page_title = models.CharField(max_length=150, null=True, blank=True)
-    page_location = models.CharField(max_length=150, null=True, blank=True)
-    traffic_source = models.CharField(max_length=150, null=True, blank=True)
-    event_name = models.CharField(max_length=150, null=True, blank=True)
-    geolocation_city = models.CharField(max_length=50, null=True, blank=True)
-    geolocation_state = models.CharField(max_length=50, null=True, blank=True)
-    geolocation_country = models.CharField(max_length=50, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
+
+
+
+#########################################################
+###                                                   ###
+#########################################################
+
+# BusinessEntity
+
+# class BusinessEntity(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     entity_id = models.CharField(max_length=50, null=True, blank=True)
+#     entity_name = models.CharField(max_length=50, null=True, blank=True)
+#     slug = models.CharField(max_length=150, null=True, blank=True)
+#     description = models.TextField(null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True, null=True)
+#     modified_at = models.DateTimeField(auto_now=True, null=True)
+#     import_id = models.CharField(max_length=30, null=True, blank=True)
+
+
+# # EntityEventRole
+
+# class EntityEventRole(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     entity_id = models.CharField(max_length=50, null=True, blank=True)
+#     event_id = models.CharField(max_length=50, null=True, blank=True)
+#     role_name = models.CharField(max_length=50, null=True, blank=True)
+#     import_id = models.CharField(max_length=30, null=True, blank=True)
+    
+    
+# # EntityProductRole
+
+# class EntityProductRole(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     entity_id = models.CharField(max_length=50, null=True, blank=True)
+#     product_id = models.CharField(max_length=50, null=True, blank=True)
+#     role_name = models.CharField(max_length=50, null=True, blank=True)
+#     import_id = models.CharField(max_length=30, null=True, blank=True)
+
+
+# # EventSimilarity
+
+# class EventSimilarity(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     source_id = models.CharField(max_length=50, null=True, blank=True)
+#     target_id = models.CharField(max_length=50, null=True, blank=True)
+#     similarity = models.DecimalField(max_digits=5, decimal_places=2)
+#     algo = models.CharField(max_length=50, null=True, blank=True)
+#     import_id = models.CharField(max_length=30, null=True, blank=True)
+
+
+# # ProductSimilarity
+
+# class ProductSimilarity(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     source_id = models.CharField(max_length=50, null=True, blank=True)
+#     target_id = models.CharField(max_length=50, null=True, blank=True)
+#     similarity = models.DecimalField(max_digits=5, decimal_places=2)
+#     algo = models.CharField(max_length=50, null=True, blank=True)
+#     import_id = models.CharField(max_length=30, null=True, blank=True)
+
+
+# # Interaction
+
+# class Interaction_f(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     interaction_id = models.CharField(max_length=50, null=True, blank=True)
+#     session_id = models.CharField(max_length=50, null=True, blank=True)
+#     visitor_id = models.CharField(max_length=50, null=True, blank=True)
+#     customer_id = models.CharField(max_length=50, null=True, blank=True)
+#     visit_date = models.DateField(null=True, blank=True)
+#     visit_timestamp = models.IntegerField(null=True, blank=True)
+#     operating_system = models.CharField(max_length=150, null=True, blank=True)
+#     device_category = models.CharField(max_length=150, null=True, blank=True)
+#     browser = models.CharField(max_length=150, null=True, blank=True)
+#     page_title = models.CharField(max_length=150, null=True, blank=True)
+#     page_location = models.CharField(max_length=150, null=True, blank=True)
+#     traffic_source = models.CharField(max_length=150, null=True, blank=True)
+#     event_name = models.CharField(max_length=150, null=True, blank=True)
+#     geolocation_city = models.CharField(max_length=50, null=True, blank=True)
+#     geolocation_state = models.CharField(max_length=50, null=True, blank=True)
+#     geolocation_country = models.CharField(max_length=50, null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True, null=True)
+#     import_id = models.CharField(max_length=30, null=True, blank=True)
     
 
-#Intraction by Google Analytics:
-class Interaction_ga(models.Model):
-    id = models.AutoField(primary_key=True)
-    date = models.DateField(null=True, blank=True)
-    event_name = models.CharField(max_length=50, null=True, blank=True)
-    page_location = models.CharField(max_length=500, null=True, blank=True)
-    operating_system = models.CharField(max_length=150, null=True, blank=True)
-    device_category = models.CharField(max_length=150, null=True, blank=True)
-    country = models.CharField(max_length=150, null=True, blank=True)
-    browser = models.CharField(max_length=150, null=True, blank=True)
-    event_count = models.IntegerField(null=True, blank=True)
-    session_count = models.IntegerField(null=True, blank=True)
-    import_id = models.CharField(max_length=30, null=True, blank=True)
+# #Intraction by Google Analytics:
+# class Interaction_ga(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     date = models.DateField(null=True, blank=True)
+#     event_name = models.CharField(max_length=50, null=True, blank=True)
+#     page_location = models.CharField(max_length=500, null=True, blank=True)
+#     operating_system = models.CharField(max_length=150, null=True, blank=True)
+#     device_category = models.CharField(max_length=150, null=True, blank=True)
+#     country = models.CharField(max_length=150, null=True, blank=True)
+#     browser = models.CharField(max_length=150, null=True, blank=True)
+#     event_count = models.IntegerField(null=True, blank=True)
+#     session_count = models.IntegerField(null=True, blank=True)
+#     import_id = models.CharField(max_length=30, null=True, blank=True)
     
   
-#WebActivityType   
-class WebActivityType(models.Model):
-    name = models.CharField(max_length=60, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    value = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
+# #WebActivityType   
+# class WebActivityType(models.Model):
+#     name = models.CharField(max_length=60, null=True, blank=True)
+#     description = models.TextField(null=True, blank=True)
+#     value = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
     
     
     
@@ -318,18 +335,6 @@ class WebActivityType(models.Model):
 #     import_id = models.CharField(max_length=30, null=True, blank=True)
 
 
-# Customer
-# class Customer(models.Model):
-#     id = models.AutoField(primary_key=True)
-#     customer_id = models.CharField(max_length=50, null=True, blank=True)
-#     ip_address = models.CharField(max_length=50, null=True, blank=True)
-#     contact_id = models.CharField(max_length=50, null=True, blank=True)
-#     location_id = models.CharField(max_length=50, null=True, blank=True)
-#     dob = models.DateTimeField(null=True, blank=True)
-#     name = models.CharField(max_length=50, null=True, blank=True)
-#     gender = models.CharField(max_length=10, choices=(
-#         ('male', 'male'), ('female', 'female')), default='event')
-#     import_id = models.CharField(max_length=30, null=True, blank=True)
 
 
 # Journey
