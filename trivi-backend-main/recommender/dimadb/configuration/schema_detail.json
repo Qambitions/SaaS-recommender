@@ -1,0 +1,100 @@
+{
+    "event": {
+        "model_name": "events",
+        "display_name": "events",
+        "fields": [
+            "id",
+            "event_id",
+            "event_name",
+            "event_type",
+            "event_price",
+            "price_type",
+            "slug",
+            "lang",
+            "img",
+            "url",
+            "location_name",
+            "location_address",
+            "location_city",
+            "location_state",
+            "location_country",
+            "location_zipcode",
+            "is_public",
+            "status",
+            "description"
+        ],
+        "m2m_tables": [
+            {
+                "model_name": "businessentity",
+                "display_name": "organisme/artist",
+                "fields": [
+                    "id",
+                    "entity_id",
+                    "entity_name",
+                    "slug",
+                    "description"
+                  ],
+                "connected_field1": "event_id",
+                "connected_field2": "entity_id",
+                "connected_table": {
+                    "model_name": "entityeventrole",
+                    "display_name": "",
+                    "fields": [
+                        "id", 
+                        "role_name"
+                    ]
+                }
+            }
+        ],
+        "o2m_tables": [{
+            "model_name": "eventdate",
+            "display_name": "event_date",
+            "fields": [
+                "id",
+                "date"
+            ],
+            "connected_field": "event_id"
+        }]
+    },
+    "article": {
+        "model_name": "products",
+        "display_name": "articles",
+        "fields": [
+            "id",
+            "product_id",
+            "product_name",
+            "product_type",
+            "product_price",
+            "price_type",
+            "slug",
+            "img",
+            "url",
+            "status",
+            "description"
+        ],
+        "m2m_tables": [
+            {
+                "model_name": "businessentity",
+                "display_name": "organisme/artist",
+                "fields": [
+                    "id",
+                    "entity_id",
+                    "entity_name",
+                    "slug",
+                    "description"
+                  ],
+                "connected_field1": "product_id",
+                "connected_field2": "entity_id",
+                "connected_table": {
+                    "model_name": "entityproductrole",
+                    "display_name": "",
+                    "fields": [
+                        "id", 
+                        "role_name"
+                    ]
+                }
+            }
+        ],
+        "o2m_tables": []
+    }
+}
