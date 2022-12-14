@@ -16,6 +16,9 @@ import pymysql
 import os
 import json
 
+import os
+import yaml
+
 # Database connection
 pymysql.install_as_MySQLdb()
 
@@ -167,3 +170,23 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+VERSION = '0.0.0'
+# Database connection
+# pymysql.install_as_MySQLdb()
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+print(BASE_DIR)
+# Initialise environment variables
+try:
+    with open(f'{BASE_DIR}/env.yaml', 'r') as f:
+        env = yaml.safe_load(f)
+except FileNotFoundError:
+    env = None
+
+
+DB_HOST     = os.environ.get('DBHOST',  env['host'])
+DB_PORT     = os.environ.get('DBPORT',  env['port'])
+DB_NAME     = os.environ.get('DBNAME',  env['database'])
+DB_USER     = os.environ.get('DBUSER',  env['user'])
+DB_PASSWORD = os.environ.get('DBPWORD', env['password'])

@@ -1,5 +1,5 @@
 import os
-
+import sys
 import django
 
 from typing import Dict, Text
@@ -11,14 +11,17 @@ import tensorflow as tf
 # import tensorflow_datasets as tfds
 import tensorflow_recommenders as tfrs
 
+from dimadb.tmp import demo
 # hyper parameter // normalize before
 
-unique_user_ids                = None
-# user_nmv_buckets               = None
-unique_product_id              = None
-product_popular_scores_buckets = None
-unique_product_category        = None
-products                       = None
+# unique_user_ids                = None
+
+# unique_product_id              = None
+# product_popular_scores_buckets = None
+# unique_product_category        = None
+# products                       = None
+
+unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings= demo()
 
 class UserModel(tf.keras.Model):
     def __init__(self):
@@ -43,7 +46,7 @@ class UserModel(tf.keras.Model):
         # print('1',self.user_embedding(inputs["user_id"]))
         # print('2',self.nmv_embedding(inputs["user_nmv"]))
         return tf.concat([
-            self.user_embedding(inputs["user_id"])], axis=1)
+            self.user_embedding(inputs["customer_id"])], axis=1)
         
 
 class ItemModel(tf.keras.Model):
@@ -76,9 +79,9 @@ class ItemModel(tf.keras.Model):
         # print('2',self.popular_scores_embedding(inputs["popular_score"]))
         # print('3',self.category_embedding(inputs["product_category"]))
         return tf.concat([
-            self.title_embedding(inputs["product_id"]),
-            self.popular_scores_embedding(inputs["popular_score"]),
-            self.category_embedding(inputs["product_category"])
+            self.title_embedding(inputs["prod_name"]),
+            self.popular_scores_embedding(inputs["prod_price"]),
+            self.category_embedding(inputs["prod_category"])
         ], axis=1)
 
 class RetailModel(tfrs.models.Model):
@@ -108,24 +111,30 @@ class RetailModel(tfrs.models.Model):
         # query inputs. Otherwise the discrepancy in input structure would cause an
         # error when loading the query model after saving it.
         
-        query_embeddings = self.user_model({ "user_id"           : features["user_id"],
-                                               "user_nmv"        : features["user_nmv"],})
+        query_embeddings = self.user_model({ "customer_id"           : features["customer_id"]})
         
-        item_embeddings = self.product_model({ "product_id"      : features["product_id"],
-                                               "popular_score"   : features["popular_score"],
-                                               "product_category": features["product_category"]})
+        item_embeddings = self.product_model({ "prod_name"      : features["prod_name"],
+                                               "prod_price"   : features["prod_price"],
+                                               "prod_category": features["prod_category"]})
 
         return self.task(query_embeddings, item_embeddings)
 
 def load_model():
     ...
 
-def predict_movie(model, user, top_n=3):
+def to_dictionary(df):
+    return {name: np.array(value) for name, value in df.items()}
+
+def predict_product(user, top_n=3):
+    user = {f"customer_id":[user]}
+    user = to_dictionary(user)
+    model = RetailModel()
+    model.load_weights('./model/content_model_weights')
     # Create a model that takes in raw query features, and
     index = tfrs.layers.factorized_top_k.BruteForce(model.user_model)
     # recommends movies out of the entire movies dataset.
     index.index_from_dataset(
-    tf.data.Dataset.zip((products.map(lambda x: x["product_id"]).batch(100), products.batch(100).map(model.product_model)))
+    tf.data.Dataset.zip((products.map(lambda x: x["prod_name"]).batch(100), products.batch(100).map(model.product_model)))
     )
     # index.index(products.batch(128).map(model.product_model), products.batch(128))
 
@@ -133,13 +142,29 @@ def predict_movie(model, user, top_n=3):
     _, titles = index(user)
     
     print('Top {} recommendations for user {}:\n'.format(top_n, user))
+    # print(titles)
+    list_predict = []
     for i, title in enumerate(titles[0, :top_n].numpy()):
-        print('{}. {}'.format(i+1, title.decode("utf-8")))
+        # print('{}. {}'.format(i+1, title.decode("utf-8")))
+        list_predict.append(title.decode("utf-8"))
+    return list_predict
+
 
 def train_model():
-    ratings = None
     train = ratings.take(35000)
     cached_train = train.shuffle(100_000).batch(1_000).cache()
     model = RetailModel()
     model.compile(optimizer=tf.keras.optimizers.Adagrad(0.1))
     model.fit(cached_train, epochs=3)
+
+if __name__ == "__main__":
+    # train = ratings.take(35000)
+    # cached_train = train.shuffle(100_000).batch(1_000).cache()
+    # model = RetailModel()
+    # model.compile(optimizer=tf.keras.optimizers.Adagrad(0.1))
+    # model.fit(cached_train, epochs=3)
+    # model.save_weights('./model/content_model_weights', save_format='tf')
+
+    print(predict_product("1000000"))
+
+    

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from datetime import date, datetime, timedelta
 from django.forms.models import model_to_dict
+
 from django.db.models import Q, Count, F, Sum
 from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
 from django.apps import apps
@@ -21,6 +22,7 @@ from google.analytics.data_v1beta.types import RunReportRequest
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 from slugify import slugify
+from .personalize_recommendation import predict_product
 
 import pandas as pd
 import random
@@ -1844,15 +1846,15 @@ def get_capture(request):
         if click_path_send[i] != click_path_save[i]:
             right_product = False
             break
+    list_product = []
     if right_product:
         #recommend
         print('user has token: ', body_json['token'])
         print('user click products: ', body_json['product_href'])
-        # to do: query product
-        
-
-
-    return Response({'message': 'error'})
+        # to do: query user
+        list_product = predict_product("1000000")
+        print(list_product)
+    return Response({'message': list_product},status=status.HTTP_200_OK)
   
                 
  

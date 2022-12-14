@@ -416,7 +416,7 @@ async function send_capture(token, path, product_href) {
     path : path,
   }));
   try{
-    xxx = await fetch(
+    response_api = await fetch(
       // `http://localhost:8000/dimadb/get-capture?token=${token}&path=${path}`,
       'http://localhost:8000/dimadb/get-capture/',
       {
@@ -428,13 +428,20 @@ async function send_capture(token, path, product_href) {
         })
       }
     )
+    .then((result) => result.json())
+    .then((result) => {
+      console.log(result)
+       return result
+      
+      })
+    .catch((err) => []);
   }
+    // console.log("api",response_api.json());
   catch (error){
     console.log(error)
   }
     
-  console.log("api",xxx);
-  return xxx
+  return []
 }
 
 function capture_event(e) {
