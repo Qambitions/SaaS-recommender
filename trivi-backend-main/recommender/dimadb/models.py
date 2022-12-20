@@ -27,14 +27,14 @@ class LdaSimilarity(models.Model):
 
 # Import_info:
 class ImportInfo(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True,null=False)
     table_name = models.CharField(max_length=50, null=True, blank=True)
     source_name = models.CharField(max_length=200, null=True, blank=True)
     import_date = models.DateTimeField(auto_now_add=True)
 
 # Customer
 class Customer(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True,null=False)
     cus_id = models.CharField(max_length=50, null=True, blank=True)
     ip_address = models.CharField(max_length=50, null=True, blank=True)
     email = models.CharField(max_length=50, null=True, blank=True)
@@ -45,7 +45,7 @@ class Customer(models.Model):
 
 
 class CustomerProfile(models.Model):
-    cus_id = models.CharField(max_length=50, null=True, blank=True, primary_key=True)
+    cus_id = models.CharField(max_length=50, null=False, blank=True, primary_key=True)
     dob = models.DateTimeField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=(
         ('male', 'male'), ('female', 'female')))
@@ -54,7 +54,7 @@ class CustomerProfile(models.Model):
 
 # New_product:
 class Product(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True,null=False)
     prod_id = models.CharField(max_length=50, unique=True)
     prod_name = models.CharField(max_length=150, null=True, blank=True)
     category = models.CharField(max_length=150, null=True, blank=True)

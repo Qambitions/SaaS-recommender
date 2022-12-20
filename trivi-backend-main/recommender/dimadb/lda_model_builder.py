@@ -15,7 +15,7 @@ from stop_words import get_stop_words
 import re
 
 # django.setup()
-from dimadb.models import Events, Products, LdaSimilarityVersion, LdaSimilarity
+# from dimadb.models import Events, Products, LdaSimilarityVersion, LdaSimilarity
 
 
 def load_data(table_name):

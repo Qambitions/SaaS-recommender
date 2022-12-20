@@ -11,7 +11,7 @@ import tensorflow as tf
 # import tensorflow_datasets as tfds
 import tensorflow_recommenders as tfrs
 
-from dimadb.tmp import demo
+# from dimadb.tmp import demo
 # hyper parameter // normalize before
 
 # unique_user_ids                = None
@@ -21,7 +21,7 @@ from dimadb.tmp import demo
 # unique_product_category        = None
 # products                       = None
 
-unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings= demo()
+# unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings= demo()
 
 class UserModel(tf.keras.Model):
     def __init__(self):
