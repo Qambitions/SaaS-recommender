@@ -22,4 +22,5 @@ urlpatterns = [
     path('get-synchronize-end-date/', get_synchronize_end_date),
     path('get-recommendation/', get_recommendation),
     path('get-capture/', get_capture),
+    path('test/', test)
 ]

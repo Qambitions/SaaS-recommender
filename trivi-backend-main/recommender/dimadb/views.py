@@ -1824,8 +1824,19 @@ def get_recommendation(request):
     except Exception as error:
         return Response({'message': error})
 
+# must delete late
+EXAMPLE_PATH_PRODUCT = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
+df2 = pd.DataFrame(data = {'url': ['http://localhost:3000', 'http://localhost:3000/user/dang-nhap'], 
+                    'name_page' : ['homepage', 'login'],
+                    'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img','/html/body/div/div/div/div[2]/div/div/form/button'],
+                    'statistic' : ['colab','contentbased']})
+EXAMPLE_CURRENT_WEB  = df2
 
-EXAMPLE_PATH = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
+def check_path(x, click_path_send):
+    for i in range(len(click_path_send)):
+        if click_path_send[i] != x[i]:
+            return False
+    return True
 
 @api_view(['POST'])
 @authentication_classes([])
@@ -1833,28 +1844,41 @@ EXAMPLE_PATH = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
 def get_capture(request):
     print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
     print("test2 :", request.META.get('REMOTE_ADDR'))
-    # print(request.body)  
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    
     body_json = json.loads(request.body)
     click_path_send = body_json['path'].split(' > ')
+    # todo: kiểm tra xem đang ở trang nào để có chiến lược phù hợp
+    # query metadata
+    df_metadata = df2
+    df_path = df_metadata[df_metadata.url == body_json['current_page']]
+    if df_path.shape[0] == 0:
+        return Response({"1 không có chiến lược"})
+
     # Todo: query product path of page
-    click_path_save = re.sub("\[[0-9]*\]","",EXAMPLE_PATH)
-    click_path_save = click_path_save[1:].split('/')
+    # click_path_save = re.sub("\[[0-9]*\]","",EXAMPLE_PATH_PRODUCT)
+    # click_path_save = click_path_save[1:].split('/')
+    # click_path_send = list(reversed(click_path_send))
+    # print(click_path_send, click_path_save)
+    df_path['path'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
+    df_path['path'] = df_path['path'].str[1:]
+    df_path['path'] = df_path['path'].str.split('/')
     click_path_send = list(reversed(click_path_send))
-    print(click_path_send, click_path_save)
-    right_product = True
-    for i in range(len(click_path_send)):
-        if click_path_send[i] != click_path_save[i]:
-            right_product = False
-            break
-    list_product = []
-    if right_product:
-        #recommend
-        print('user has token: ', body_json['token'])
-        print('user click products: ', body_json['product_href'])
-        # to do: query user
-        list_product = predict_product("1000000")
-        print(list_product)
-    return Response({'message': list_product},status=status.HTTP_200_OK)
-  
-                
- 
+    df_path['check'] = df_path['path'].apply(check_path,click_path_send = click_path_send)
+    df_click = df_path[df_path['check']==True]
+    print(df_click)
+
+    
+    
+    return Response({"aaaas"})
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def test(request):
+    df_customer = Product.objects.all().values()
+    df_customer = pd.DataFrame(Product.objects.all().values())
+    print(df_customer)
+    return Response({"aaaas"})

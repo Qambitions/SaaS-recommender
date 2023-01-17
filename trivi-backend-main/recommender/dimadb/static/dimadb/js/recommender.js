@@ -408,7 +408,7 @@ const debounce = (func, delay=100) => {
   }
 } 
 
-async function send_capture(token, path, product_href) {
+async function send_capture(token, path, product_href,current_page) {
   console.log(path, token);
   console.log('localhost:8000' + "/dimadb/get-capture/");
   console.log(JSON.stringify({
@@ -425,6 +425,7 @@ async function send_capture(token, path, product_href) {
           token: token,
           path : path,
           product_href: product_href,
+          current_page: current_page
         })
       }
     )
@@ -452,30 +453,24 @@ function capture_event(e) {
     }
     var et = evt.type ? evt.type : evt;
     var time = Math.floor(Date.now() / 1000);
-    // console.log("test111",evt.path)
+    // console.log("test111",evt)
+    // console.log("test view",evt.view.window.location)
     var list = []
     var check_click = false;
     var s = "";
-    var product_href = "";
+    var product_href = evt.view.window.location.href;
+    var current_page = evt.view.window.location.origin;
     for (var i = 0; i < evt.path.length; i++){
-      
-      if (typeof(evt.path[i].href) !== "undefined") {
-        check_click = true;
-        // console.log(check_click,i,evt.path);
-        product_href = evt.path[i].href;
-      }
-      if (check_click) {
-        // console.log(i,evt.path[i].tagName, evt.path[i].id, evt.path[i].className);
-        list.push(evt.path[i].tagName.toLowerCase())
-        if (evt.path[i].tagName.toLowerCase() == 'html'){
-          break;
-        }
+      // console.log(i,evt.path[i].tagName, evt.path[i].id, evt.path[i].className);
+      list.push(evt.path[i].tagName.toLowerCase())
+      if (evt.path[i].tagName.toLowerCase() == 'html'){
+        break;
       }
     }
     console.log("end")
-    if (check_click) {
-      send_capture(checkCookie(), list.join(" > "),product_href)
-    }
+
+    //todo: check is right path before send (query)
+    send_capture(checkCookie(), list.join(" > "),product_href,current_page)
     
     
     // if (check_click == true)

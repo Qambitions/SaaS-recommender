@@ -11,7 +11,7 @@ import tensorflow as tf
 # import tensorflow_datasets as tfds
 import tensorflow_recommenders as tfrs
 
-# from dimadb.tmp import demo
+from dimadb.tmp import demo
 # hyper parameter // normalize before
 
 # unique_user_ids                = None
@@ -21,11 +21,12 @@ import tensorflow_recommenders as tfrs
 # unique_product_category        = None
 # products                       = None
 
-# unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings= demo()
+
 
 class UserModel(tf.keras.Model):
     def __init__(self):
         super().__init__()     
+        unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
         self.embedding_dimension = 32
         max_tokens = 10_000
 
@@ -52,6 +53,7 @@ class UserModel(tf.keras.Model):
 class ItemModel(tf.keras.Model):
     def __init__(self):
         super().__init__()
+        unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
         self.embedding_dimension = 24
 
         ## embed title from unique_item_titles
@@ -87,7 +89,7 @@ class ItemModel(tf.keras.Model):
 class RetailModel(tfrs.models.Model):
     def __init__(self):
         super().__init__()        
-
+        unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
         ## user model is user model
         self.user_model = tf.keras.Sequential([
                           UserModel(),
@@ -126,6 +128,7 @@ def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
 
 def predict_product(user, top_n=3):
+    unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
     user = {f"customer_id":[user]}
     user = to_dictionary(user)
     model = RetailModel()
@@ -151,6 +154,7 @@ def predict_product(user, top_n=3):
 
 
 def train_model():
+    unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
     train = ratings.take(35000)
     cached_train = train.shuffle(100_000).batch(1_000).cache()
     model = RetailModel()

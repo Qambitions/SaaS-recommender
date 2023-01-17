@@ -42,6 +42,7 @@ class Customer(models.Model):
     last_name = models.CharField(max_length=50, null=True, blank=True)
     username = models.CharField(max_length=30, null=True, blank=True)
     phone = models.CharField(max_length=10, null=True, blank=True)
+    token = models.CharField(max_length=100, null=True, blank=True)
 
 
 class CustomerProfile(models.Model):

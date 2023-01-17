@@ -10,22 +10,20 @@ config = settings
 import pandas as pd
 import numpy  as np
 import tensorflow as tf
+from .models import *
 
 from src.utils.database import check_na_df, query_to_df, insert_update
+from .models import*
 
 def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
 
 def demo():
-    df_customer = query_to_df("""
-                                select * from customer
-                                """)
+    df_customer = pd.DataFrame(Customer.objects.all().values())
     df_customer = df_customer.astype(str)
     unique_user_ids = np.unique(list(df_customer.cus_id))
 
-    df_product = query_to_df("""
-                            select * from product
-                            """)
+    df_product = pd.DataFrame(Product.objects.all().values())
     df_product.prod_name = df_product.prod_name.astype(str)
     df_product.category = df_product.category.astype(str)
     unique_product_id = np.unique(list(df_product.prod_name))
@@ -38,19 +36,25 @@ def demo():
                                 "current_price":'prod_price'}, inplace = True)
     products = tf.data.Dataset.from_tensor_slices(to_dictionary(df_product[['prod_name','prod_category','prod_price']]))
 
-    df_ratings = query_to_df("""
-                            select p.prod_name , cs.customer_id,p.current_price as prod_price,p.category as prod_category
-                            from event_item ei
-                            join web_event we on ei.event_id = we.event_id 
-                            join customer_session cs  on cs.session_id = we.session_id 
-                            join product p  on we.event_id = p.prod_id 
-                            """)
+    df_customer_session = pd.DataFrame(Session.objects.all().values())
+    df_web_event   = pd.DataFrame(Events.objects.all().values())
+    df_ratings = pd.DataFrame(EventItem.objects.all().values())
+    df_ratings = df_ratings.merge(df_web_event, on = 'event_id')
+    df_ratings = df_ratings.merge(df_customer_session, on = 'session_id')
+    df_ratings = df_ratings.merge(df_product, on = 'prod_id')
+    df_ratings = df_ratings[["prod_name",	
+                                "customer_id", "prod_price",	
+                                "prod_category"]]
+    df_ratings.drop_duplicates(inplace=True)
+    df_ratings.reset_index(inplace = True)
     df_ratings.customer_id = df_ratings.customer_id.astype(str)
     df_ratings.prod_category = df_ratings.prod_category.astype(str)
     ratings = tf.data.Dataset.from_tensor_slices(to_dictionary(df_ratings))
 
     return unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings
 
-if __name__ == "__main__":
-    print("test")
-    unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+# if __name__ == "__main__":
+#     print("test")
+#     # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+#     item = Product.objects.all().values()
+#     df = pd.DataFrame(item)
