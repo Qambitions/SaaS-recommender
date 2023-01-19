@@ -1828,12 +1828,14 @@ def get_recommendation(request):
 EXAMPLE_PATH_PRODUCT = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
 df2 = pd.DataFrame(data = {'url': ['http://localhost:3000', 'http://localhost:3000/user/dang-nhap'], 
                     'name_page' : ['homepage', 'login'],
-                    'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img','/html/body/div/div/div/div[2]/div/div/form/button'],
+                    'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]','/html/body/div/div/div/div[2]/div/div/form/button'],
                     'statistic' : ['colab','contentbased']})
 EXAMPLE_CURRENT_WEB  = df2
 
 def check_path(x, click_path_send):
-    for i in range(len(click_path_send)):
+    if len(x) > len(click_path_send): 
+        return False
+    for i in range(len(x)):
         if click_path_send[i] != x[i]:
             return False
     return True
@@ -1858,10 +1860,6 @@ def get_capture(request):
         return Response({"1 không có chiến lược"})
 
     # Todo: query product path of page
-    # click_path_save = re.sub("\[[0-9]*\]","",EXAMPLE_PATH_PRODUCT)
-    # click_path_save = click_path_save[1:].split('/')
-    # click_path_send = list(reversed(click_path_send))
-    # print(click_path_send, click_path_save)
     df_path['path'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
     df_path['path'] = df_path['path'].str[1:]
     df_path['path'] = df_path['path'].str.split('/')
@@ -1869,16 +1867,34 @@ def get_capture(request):
     df_path['check'] = df_path['path'].apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check']==True]
     print(df_click)
+    if df_click.shape[0] == 0:
+        return Response({"2 không có chiến lược"})
+    statistic = df_click['statistic'][0]
+    
+    # todo: add session and event
+    if statistic == 'login':
+        #todo: add token
+        ...
 
+    df_user = pd.DataFrame(Customer.objects.filter(token='x').values())
+    if df_user.shape[0] == 0:
+        return Response({"3 không có user tương ứng"})
     
-    
+    if statistic == 'colab':
+        ...
+    if statistic == 'demographic':
+        ...
+    if statistic == 'content':
+        ...
+
     return Response({"aaaas"})
 
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
 def test(request):
-    df_customer = Product.objects.all().values()
-    df_customer = pd.DataFrame(Product.objects.all().values())
+    # df_customer = Product.objects.all().values()
+    df_customer = pd.DataFrame(Customer.objects.filter(token='x').values())
+    # df_customer = Customer.objects.filter(token='fadfadfsdf').values_list('cus_id', flat=True)
     print(df_customer)
     return Response({"aaaas"})

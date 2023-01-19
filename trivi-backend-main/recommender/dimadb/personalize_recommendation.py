@@ -86,7 +86,7 @@ class ItemModel(tf.keras.Model):
             self.category_embedding(inputs["prod_category"])
         ], axis=1)
 
-class RetailModel(tfrs.models.Model):
+class RetailModel(metaclass = tfrs.models.Model):
     def __init__(self):
         super().__init__()        
         unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()

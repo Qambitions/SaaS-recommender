@@ -397,24 +397,13 @@ function getListViews(recommendations) {
   }
 }
 
-const debounce = (func, delay=100) => {
-  let debounceTimer
-  return function() {
-      const context = this
-      const args = arguments
-          clearTimeout(debounceTimer)
-              debounceTimer
-          = setTimeout(() => func.apply(context, args), delay)
-  }
-} 
-
-async function send_capture(token, path, product_href,current_page) {
-  console.log(path, token);
-  console.log('localhost:8000' + "/dimadb/get-capture/");
-  console.log(JSON.stringify({
-    token: token,
-    path : path,
-  }));
+async function send_capture(token, path, product_href,current_page,text) {
+  // console.log(path, token);
+  // console.log('localhost:8000' + "/dimadb/get-capture/");
+  // console.log(JSON.stringify({
+  //   token: token,
+  //   path : path,
+  // }));
   try{
     response_api = await fetch(
       // `http://localhost:8000/dimadb/get-capture?token=${token}&path=${path}`,
@@ -425,7 +414,8 @@ async function send_capture(token, path, product_href,current_page) {
           token: token,
           path : path,
           product_href: product_href,
-          current_page: current_page
+          current_page: current_page,
+          text : text
         })
       }
     )
@@ -446,92 +436,25 @@ async function send_capture(token, path, product_href,current_page) {
 }
 
 function capture_event(e) {
-  var evt = e || window.event;
+  var evt = e 
   if (evt) {
     if (evt.isPropagationStopped && evt.isPropagationStopped()) {
       return;
     }
-    var et = evt.type ? evt.type : evt;
     var time = Math.floor(Date.now() / 1000);
-    // console.log("test111",evt)
-    // console.log("test view",evt.view.window.location)
-    var list = []
-    var check_click = false;
-    var s = "";
     var product_href = evt.view.window.location.href;
     var current_page = evt.view.window.location.origin;
-    for (var i = 0; i < evt.path.length; i++){
-      // console.log(i,evt.path[i].tagName, evt.path[i].id, evt.path[i].className);
-      list.push(evt.path[i].tagName.toLowerCase())
-      if (evt.path[i].tagName.toLowerCase() == 'html'){
+    var event_path   = evt.composedPath();
+    list = []
+    for (var i = 0; i < event_path.length; i++){
+      list.push(event_path[i].localName.toLowerCase())
+      if (event_path[i].localName.toLowerCase() == 'html'){
         break;
       }
     }
-    console.log("end")
-
     //todo: check is right path before send (query)
-    send_capture(checkCookie(), list.join(" > "),product_href,current_page)
-    
-    
-    // if (check_click == true)
-    //   console.log("right",evt.path)
+    text = document.querySelector('input').value;
+    send_capture(checkCookie(), list.join(" > "),product_href,current_page,text)
 
-
-    // if (evt.pageX) {
-    //   x = evt.pageX;
-    // }
-    // if (evt.pageY) {
-    //   y = evt.pageY;
-    // }
-    // if (trgt.scrollTop) {
-    //   scrolltop = trgt.scrollTop;
-    // }
-    // if (trgt.className && trgt.id) {
-    //   trgt = "." + trgt.className + "#" + trgt.id;
-    // }
-    // else if (trgt.id) {
-    //   trgt = "#" + trgt.id;
-    // }
-    // else if (trgt.className) {
-    //   trgt = "." + trgt.className;
-    // }
-
-    // if (typeof (trgt) != "String") {
-    //   if (trgt.tagName) {
-    //     trgt = trgt.tagName;
-    //   }
-    //   else {
-    //     trgt = trgt.toString().toLowerCase();
-    //     trgt = trgt.replace("[object ", "");
-    //     trgt = trgt.replace("]", "");
-    //     trgt = trgt.replace("htmlbodyelement", "BODY");
-    //   }
-    // }
-    // var xtra = "";
-    // if (evt.keyCode) {
-    //   xtra += " KeyCode: " + evt.keyCode;
-    // }
-    // if (evt.shiftKey) {
-    //   xtra += " ShiftKey ";
-    // }
-    // if (evt.altKey) {
-    //   xtra += " altKey ";
-    // }
-    // if (evt.metaKey) {
-    //   xtra += " metaKey ";
-    // }
-    // if (evt.ctrlKey) {
-    //   xtra += " ctrlKey ";
-    // }
-    // var w = window,
-    //   d = document,
-    //   e = d.documentElement,
-    //   g = d.getElementsByTagName('body')[0],
-    //   xx = w.innerWidth || e.clientWidth || g.clientWidth,
-    //   yy = w.innerHeight || e.clientHeight || g.clientHeight;
-    // xtra += " RES:" + xx + "X" + yy;
-
-    // document.getElementById("op").innerHTML += "<tr><td>" + et + "</td><td>" + trgt + "</td><td>" + x + "</td><td>" + y + "</td><td>" + scrolltop + "</td><td>" + time + "</td><td>" + xtra + "</td></tr>";
-    // console.log(trgt, ' ',scrolltop,' ',xtra )
   }
 }
