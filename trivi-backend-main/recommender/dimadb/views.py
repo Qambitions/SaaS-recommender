@@ -23,6 +23,7 @@ from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 from slugify import slugify
 from .personalize_recommendation import predict_product
+from .recommend_statistic import login_statistic
 
 import pandas as pd
 import random
@@ -1829,7 +1830,7 @@ EXAMPLE_PATH_PRODUCT = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
 df2 = pd.DataFrame(data = {'url': ['http://localhost:3000', 'http://localhost:3000/user/dang-nhap'], 
                     'name_page' : ['homepage', 'login'],
                     'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]','/html/body/div/div/div/div[2]/div/div/form/button'],
-                    'statistic' : ['colab','contentbased']})
+                    'statistic' : ['colab','login']})
 EXAMPLE_CURRENT_WEB  = df2
 
 def check_path(x, click_path_send):
@@ -1851,32 +1852,35 @@ def get_capture(request):
         ip_add = request.META.get('REMOTE_ADDR')
     
     body_json = json.loads(request.body)
-    click_path_send = body_json['path'].split(' > ')
     # todo: kiểm tra xem đang ở trang nào để có chiến lược phù hợp
     # query metadata
     df_metadata = df2
+    print(body_json['current_page'])
+    
     df_path = df_metadata[df_metadata.url == body_json['current_page']]
     if df_path.shape[0] == 0:
         return Response({"1 không có chiến lược"})
 
     # Todo: query product path of page
+    click_path_send = body_json['path'].split(' > ')
+    click_path_send = list(reversed(click_path_send))
+    print(click_path_send)
     df_path['path'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
     df_path['path'] = df_path['path'].str[1:]
     df_path['path'] = df_path['path'].str.split('/')
-    click_path_send = list(reversed(click_path_send))
     df_path['check'] = df_path['path'].apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check']==True]
-    print(df_click)
     if df_click.shape[0] == 0:
         return Response({"2 không có chiến lược"})
-    statistic = df_click['statistic'][0]
+    statistic = df_click['statistic'].iat[0]
+    print(statistic)
     
     # todo: add session and event
     if statistic == 'login':
         #todo: add token
-        ...
+        login_statistic(body_json['text'], body_json['token'])
 
-    df_user = pd.DataFrame(Customer.objects.filter(token='x').values())
+    df_user = pd.DataFrame(Customer.objects.filter(token=body_json['token']).values())
     if df_user.shape[0] == 0:
         return Response({"3 không có user tương ứng"})
     
@@ -1885,6 +1889,8 @@ def get_capture(request):
     if statistic == 'demographic':
         ...
     if statistic == 'content':
+        ...
+    if statistic == 'hot':
         ...
 
     return Response({"aaaas"})
@@ -1896,5 +1902,8 @@ def test(request):
     # df_customer = Product.objects.all().values()
     df_customer = pd.DataFrame(Customer.objects.filter(token='x').values())
     # df_customer = Customer.objects.filter(token='fadfadfsdf').values_list('cus_id', flat=True)
-    print(df_customer)
+    # print(df_customer)
+    Customer.objects.filter(username='test_ahi').update(token='aaaaa')
+    xx = "http://localhost:3000/product/{number}"
+    print(xx)
     return Response({"aaaas"})

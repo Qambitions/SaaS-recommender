@@ -397,13 +397,13 @@ function getListViews(recommendations) {
   }
 }
 
-async function send_capture(token, path, product_href,current_page,text) {
+async function send_capture(token, path,current_page,text) {
   // console.log(path, token);
   // console.log('localhost:8000' + "/dimadb/get-capture/");
-  // console.log(JSON.stringify({
-  //   token: token,
-  //   path : path,
-  // }));
+  console.log(JSON.stringify({
+    token: token,
+    path : path,
+  }));
   try{
     response_api = await fetch(
       // `http://localhost:8000/dimadb/get-capture?token=${token}&path=${path}`,
@@ -413,7 +413,6 @@ async function send_capture(token, path, product_href,current_page,text) {
         body: JSON.stringify({
           token: token,
           path : path,
-          product_href: product_href,
           current_page: current_page,
           text : text
         })
@@ -435,6 +434,17 @@ async function send_capture(token, path, product_href,current_page,text) {
   return []
 }
 
+const debounce = (func, delay) => {
+  let debounceTimer
+  return function() {
+      const context = this
+      const args = arguments
+          clearTimeout(debounceTimer)
+              debounceTimer
+          = setTimeout(() => func.apply(context, args), delay)
+  }
+}
+
 function capture_event(e) {
   var evt = e 
   if (evt) {
@@ -442,9 +452,10 @@ function capture_event(e) {
       return;
     }
     var time = Math.floor(Date.now() / 1000);
-    var product_href = evt.view.window.location.href;
-    var current_page = evt.view.window.location.origin;
+    var product_href = window.location.href;
+    console.log(product_href)
     var event_path   = evt.composedPath();
+    console.log(event_path)
     list = []
     for (var i = 0; i < event_path.length; i++){
       list.push(event_path[i].localName.toLowerCase())
@@ -454,7 +465,7 @@ function capture_event(e) {
     }
     //todo: check is right path before send (query)
     text = document.querySelector('input').value;
-    send_capture(checkCookie(), list.join(" > "),product_href,current_page,text)
+    send_capture(checkCookie(), list.join(" > "),product_href,text)
 
   }
 }
