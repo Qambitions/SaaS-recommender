@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from datetime import date, datetime, timedelta
 from django.forms.models import model_to_dict
 
-from django.db.models import Q, Count, F, Sum
+from django.db.models import Q, Count, F, Sum, Max
 from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
 from django.apps import apps
 from django.core.files.storage import default_storage
@@ -1827,7 +1827,7 @@ def get_recommendation(request):
 
 # must delete late
 EXAMPLE_PATH_PRODUCT = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
-df2 = pd.DataFrame(data = {'url': ['http://localhost:3000', 'http://localhost:3000/user/dang-nhap'], 
+df2 = pd.DataFrame(data = {'url': ['http://localhost:3000/product/{number}', 'http://localhost:3000/user/dang-nhap'], 
                     'name_page' : ['homepage', 'login'],
                     'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]','/html/body/div/div/div/div[2]/div/div/form/button'],
                     'statistic' : ['colab','login']})
@@ -1840,6 +1840,17 @@ def check_path(x, click_path_send):
         if click_path_send[i] != x[i]:
             return False
     return True
+
+def check_url_regex(url_pattern, current_page):
+    pattern = url_pattern
+    pattern = pattern.replace("{number}","[0-9]*")
+    pattern = pattern.replace("{any}","[\s\S]*")
+    return re.search(pattern,current_page)
+
+def check_url(x, current_page):
+    check = check_url_regex(x,current_page)
+    if check: return True
+    else: return False
 
 @api_view(['POST'])
 @authentication_classes([])
@@ -1857,7 +1868,10 @@ def get_capture(request):
     df_metadata = df2
     print(body_json['current_page'])
     
-    df_path = df_metadata[df_metadata.url == body_json['current_page']]
+    # df_path = df_metadata[df_metadata.url == body_json['current_page']]
+    df_path = df_metadata
+    df_path['check_url'] = df_path['url'].apply(check_url,current_page = body_json['current_page'])
+    df_path = df_path[df_path['check_url']==True]
     if df_path.shape[0] == 0:
         return Response({"1 không có chiến lược"})
 
@@ -1868,8 +1882,8 @@ def get_capture(request):
     df_path['path'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
     df_path['path'] = df_path['path'].str[1:]
     df_path['path'] = df_path['path'].str.split('/')
-    df_path['check'] = df_path['path'].apply(check_path,click_path_send = click_path_send)
-    df_click = df_path[df_path['check']==True]
+    df_path['check_path'] = df_path['path'].apply(check_path,click_path_send = click_path_send)
+    df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
         return Response({"2 không có chiến lược"})
     statistic = df_click['statistic'].iat[0]
@@ -1883,6 +1897,8 @@ def get_capture(request):
     df_user = pd.DataFrame(Customer.objects.filter(token=body_json['token']).values())
     if df_user.shape[0] == 0:
         return Response({"3 không có user tương ứng"})
+    
+
     
     if statistic == 'colab':
         ...
@@ -1905,5 +1921,6 @@ def test(request):
     # print(df_customer)
     Customer.objects.filter(username='test_ahi').update(token='aaaaa')
     xx = "http://localhost:3000/product/{number}"
-    print(xx)
+    print(xx.replace("{number}","[0-9]*"))
+    print(Customer.objects.aggregate(Max('cus_id')))
     return Response({"aaaas"})
