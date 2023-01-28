@@ -84,13 +84,13 @@ class WebEvent(models.Model):
 
 class EventItem(models.Model):
     event_id = models.CharField(max_length=150)
-    prod_id = models.CharField(max_length=50)
+    product_id = models.CharField(max_length=50)
     quantity = models.IntegerField(null=False)
     price = models.IntegerField(null=False)
 
 class BusinessTransaction(models.Model):
     # id = models.AutoField(primary_key=True)
-    transaction_id = models.CharField(primary_key=True, max_length=150, unique=True)
+    transaction_id = models.AutoField(primary_key=True, max_length=150, unique=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     transaction_price = models.IntegerField(null=False)
     transaction_revenue = models.IntegerField(null=False)
