@@ -21,13 +21,37 @@ from dimadb.tmp import demo
 # unique_product_category        = None
 # products                       = None
 
+class SingletonMeta(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+class InitClass(metaclass = SingletonMeta):
+    def __init__(self):
+        super().__init__() 
+        self.unique_user_ids,\
+            self.unique_product_id,\
+            self.unique_product_category,\
+            self.product_popular_scores_buckets,\
+            self.products,\
+            self.ratings = demo()
 
 
-class UserModel(tf.keras.Model):
+class UserModel(tf.keras.Model,metaclass = SingletonMeta):
     def __init__(self):
         super().__init__()     
-        unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-        self.embedding_dimension = 32
+        # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+        tmp = InitClass()
+        unique_user_ids                 = tmp.unique_user_ids               
+        unique_product_id               = tmp.unique_product_id             
+        unique_product_category         = tmp.unique_product_category       
+        product_popular_scores_buckets  = tmp.product_popular_scores_buckets
+        products                        = tmp.products                      
+        ratings                         = tmp.ratings                       
+        self.embedding_dimension = 32   
         max_tokens = 10_000
 
         # user id
@@ -50,10 +74,17 @@ class UserModel(tf.keras.Model):
             self.user_embedding(inputs["customer_id"])], axis=1)
         
 
-class ItemModel(tf.keras.Model):
+class ItemModel(tf.keras.Model,metaclass = SingletonMeta):
     def __init__(self):
         super().__init__()
-        unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+        # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+        tmp = InitClass()
+        unique_user_ids                 = tmp.unique_user_ids               
+        unique_product_id               = tmp.unique_product_id             
+        unique_product_category         = tmp.unique_product_category       
+        product_popular_scores_buckets  = tmp.product_popular_scores_buckets
+        products                        = tmp.products                      
+        ratings                         = tmp.ratings
         self.embedding_dimension = 24
 
         ## embed title from unique_item_titles
@@ -86,10 +117,17 @@ class ItemModel(tf.keras.Model):
             self.category_embedding(inputs["prod_category"])
         ], axis=1)
 
-class RetailModel(metaclass = tfrs.models.Model):
+class RetailModel(tfrs.models.Model,metaclass = SingletonMeta):
     def __init__(self):
         super().__init__()        
-        unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+        # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+        tmp = InitClass()
+        unique_user_ids                 = tmp.unique_user_ids               
+        unique_product_id               = tmp.unique_product_id             
+        unique_product_category         = tmp.unique_product_category       
+        product_popular_scores_buckets  = tmp.product_popular_scores_buckets
+        products                        = tmp.products                      
+        ratings                         = tmp.ratings
         ## user model is user model
         self.user_model = tf.keras.Sequential([
                           UserModel(),
@@ -128,9 +166,17 @@ def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
 
 def predict_product(user, top_n=3):
-    unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+    # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+    tmp = InitClass()
+    unique_user_ids                 = tmp.unique_user_ids               
+    unique_product_id               = tmp.unique_product_id             
+    unique_product_category         = tmp.unique_product_category       
+    product_popular_scores_buckets  = tmp.product_popular_scores_buckets
+    products                        = tmp.products                      
+    ratings                         = tmp.ratings
     user = {f"customer_id":[user]}
     user = to_dictionary(user)
+    #TODO: load from db
     model = RetailModel()
     model.load_weights('./model/content_model_weights')
     # Create a model that takes in raw query features, and
@@ -154,7 +200,14 @@ def predict_product(user, top_n=3):
 
 
 def train_model():
-    unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+    # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+    tmp = InitClass()
+    unique_user_ids                 = tmp.unique_user_ids               
+    unique_product_id               = tmp.unique_product_id             
+    unique_product_category         = tmp.unique_product_category       
+    product_popular_scores_buckets  = tmp.product_popular_scores_buckets
+    products                        = tmp.products                      
+    ratings                         = tmp.ratings
     train = ratings.take(35000)
     cached_train = train.shuffle(100_000).batch(1_000).cache()
     model = RetailModel()
@@ -170,5 +223,5 @@ if __name__ == "__main__":
     # model.save_weights('./model/content_model_weights', save_format='tf')
 
     print(predict_product("1000000"))
-
+    a = InitClass()
     

@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from datetime import date, datetime, timedelta
 from django.forms.models import model_to_dict
 
-from django.db.models import Q, Count, F, Sum, Max
+from django.db.models import Q, Count, F, Sum, Max, Min
 from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
 from django.apps import apps
 from django.core.files.storage import default_storage
@@ -1898,10 +1898,12 @@ def get_capture(request):
     if df_user.shape[0] == 0:
         return Response({"3 không có user tương ứng"})
     
-
+    # print(df_user.iloc[0]['cus_id'])
+    ## TODO: insert record session
     
     if statistic == 'colab':
-        ...
+        list_product = predict_product(df_user.iloc[0]['cus_id'])
+        return Response({'message': list_product},status=status.HTTP_200_OK)
     if statistic == 'demographic':
         ...
     if statistic == 'content':
@@ -1911,6 +1913,7 @@ def get_capture(request):
 
     return Response({"aaaas"})
 
+from datetime import datetime
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
@@ -1922,5 +1925,15 @@ def test(request):
     Customer.objects.filter(username='test_ahi').update(token='aaaaa')
     xx = "http://localhost:3000/product/{number}"
     print(xx.replace("{number}","[0-9]*"))
-    print(Customer.objects.aggregate(Max('cus_id')))
+    # print(Customer.objects.aggregate(max_cus = Max('cus_id')))
+    session_user = Session.objects.filter(customer_id='1000006')
+    max_time     = session_user.aggregate(max_time=Max('end_time'))['max_time']
+    min_time     = session_user.aggregate(max_time=Min('end_time'))['max_time']
+    record       = session_user.filter(end_time = max_time)
+    print(max_time > min_time + timedelta(minutes=15))
+    print(Session.objects.all()[4].customer_id)
+    now_time     = datetime.now()
+    x = Session(start_time = now_time, end_time = now_time, customer_id = '1000000')
+    x.save()
+    print("aaa",session_user.aggregate(max_time=Max('end_time'))['max_time'])
     return Response({"aaaas"})
