@@ -34,8 +34,8 @@ class ImportInfo(models.Model):
 
 # Customer
 class Customer(models.Model):
-    id = models.AutoField(primary_key=True,null=False)
-    cus_id = models.CharField(max_length=50, null=True, blank=True)
+    # id = models.AutoField(primary_key=True,null=False)
+    customer_id = models.CharField(primary_key=True, max_length=50, null=True, blank=True)
     ip_address = models.CharField(max_length=50, null=True, blank=True)
     email = models.CharField(max_length=50, null=True, blank=True)
     first_name = models.CharField(max_length=50, null=True, blank=True)
@@ -46,7 +46,7 @@ class Customer(models.Model):
 
 
 class CustomerProfile(models.Model):
-    cus_id = models.CharField(max_length=50, null=False, blank=True, primary_key=True)
+    customer_id = models.CharField(max_length=50, null=False, blank=True, primary_key=True)
     dob = models.DateTimeField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=(
         ('male', 'male'), ('female', 'female')))
@@ -55,31 +55,31 @@ class CustomerProfile(models.Model):
 
 # New_product:
 class Product(models.Model):
-    id = models.AutoField(primary_key=True,null=False)
-    prod_id = models.CharField(max_length=50, unique=True)
-    prod_name = models.CharField(max_length=150, null=True, blank=True)
+    # id = models.AutoField(primary_key=True,null=False)
+    product_id = models.CharField(primary_key=True, max_length=50, unique=True)
+    product_name = models.CharField(max_length=150, null=True, blank=True)
     category = models.CharField(max_length=150, null=True, blank=True)
-    current_price = models.IntegerField(null=True, blank=True)
+    price = models.IntegerField(null=True, blank=True)
+    revenue = models.IntegerField(null=True, blank=True)
     url = models.CharField(max_length=150, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
    
 # Session
-class Session(models.Model):
-    id = models.AutoField(primary_key=True)
-    session_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
+class CustomerSession(models.Model):
+    # id = models.AutoField(primary_key=True)
+    session_id = models.CharField(primary_key=True, max_length=50, null=True, blank=True, unique=True)
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
     customer_id = models.CharField(max_length=50, null=True, blank=True)
     
 
 # New_event:
-class Events(models.Model):
-    id = models.AutoField(primary_key=True)
-    event_id = models.CharField(max_length=150, unique=True)
+class WebEvent(models.Model):
+    # id = models.AutoField(primary_key=True)
+    event_id = models.CharField(primary_key=True, max_length=150, unique=True)
     event_type = models.CharField(max_length=150, null=True, blank=True)
-    event_status = models.CharField(max_length=30, null=True, blank=True)
     session_id = models.CharField(max_length=50, null=True, blank=True)
-    sent_at = models.DateTimeField(auto_now_add=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
 class EventItem(models.Model):
     event_id = models.CharField(max_length=150)
@@ -87,6 +87,22 @@ class EventItem(models.Model):
     quantity = models.IntegerField(null=False)
     price = models.IntegerField(null=False)
 
+class BusinessTransaction(models.Model):
+    # id = models.AutoField(primary_key=True)
+    transaction_id = models.CharField(primary_key=True, max_length=150, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    transaction_price = models.IntegerField(null=False)
+    transaction_revenue = models.IntegerField(null=False)
+    transaction_shipping = models.IntegerField(null=False)
+    transaction_status = models.CharField(max_length=150, null=True, blank=True)    
+    session_id = models.CharField(max_length=50, null=True, blank=True)
+
+class TransactionItem(models.Model):
+    transaction_id = models.CharField(max_length=150)
+    product_id = models.CharField(max_length=50)
+    quantity = models.IntegerField(null=False)
+    price = models.IntegerField(null=False)
+    revenue = models.IntegerField(null=False)
 
 # ProductSimilarity
 class SimilarProduct(models.Model):
@@ -101,6 +117,24 @@ class SimilarCustomer(models.Model):
     compatibility = models.DecimalField(max_digits=5, decimal_places=2)
 
 
+class RecommenderModel(models.Model):
+    model_id = models.CharField(primary_key = True, max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    model_type = models.CharField(max_length=50, null=True, blank=True)
+    model_result = models.CharField(null=True, blank=True)
+
+
+class RecommenderStrategy(models.Model):
+    id = models.CharField(primary_key = True, max_length=50, null=True, blank=True)
+    strategy = models.CharField(max_length=50, null=True, blank=True)
+    event_type = models.CharField(max_length=50, null=True, blank=True)
+    url = models.CharField(max_length=50, null=True, blank=True)
+    xpath = models.CharField(max_length=50, null=True, blank=True)
+
+class Scheduler(models.Model):
+    scheduler_id = models.CharField(primary_key = True, max_length=50, null=True, blank=True)
+    cycle_time = models.IntegerField(null=False)
+   
 
 
 
