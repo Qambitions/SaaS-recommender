@@ -35,7 +35,7 @@ class ImportInfo(models.Model):
 # Customer
 class Customer(models.Model):
     # id = models.AutoField(primary_key=True,null=False)
-    customer_id = models.CharField(primary_key=True, max_length=50, null=True, blank=True)
+    customer_id = models.CharField(primary_key=True, max_length=50,null=False, blank=True)
     ip_address = models.CharField(max_length=50, null=True, blank=True)
     email = models.CharField(max_length=50, null=True, blank=True)
     first_name = models.CharField(max_length=50, null=True, blank=True)
@@ -67,7 +67,7 @@ class Product(models.Model):
 # Session
 class CustomerSession(models.Model):
     # id = models.AutoField(primary_key=True)
-    session_id = models.AutoField(primary_key=True, max_length=50, null=True, blank=True, unique=True)
+    session_id = models.AutoField(primary_key=True, max_length=50,null=False, blank=True, unique=True)
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
     customer_id = models.CharField(max_length=50, null=True, blank=True)
@@ -82,7 +82,7 @@ class WebEvent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
 
 class EventItem(models.Model):
-    event_id = models.AutoField(max_length=150)
+    event_id = models.CharField(max_length=150)
     prod_id = models.CharField(max_length=50)
     quantity = models.IntegerField(null=False)
     price = models.IntegerField(null=False)
@@ -118,21 +118,21 @@ class SimilarCustomer(models.Model):
 
 
 class RecommenderModel(models.Model):
-    model_id = models.CharField(primary_key = True, max_length=50, null=True, blank=True)
+    model_id = models.CharField(primary_key = True, max_length=50,null=False, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     model_type = models.CharField(max_length=50, null=True, blank=True)
     model_result = models.BinaryField(null=True, blank=True)
 
 
 class RecommenderStrategy(models.Model):
-    id = models.CharField(primary_key = True, max_length=50, null=True, blank=True)
+    id = models.CharField(primary_key = True, max_length=50,null=False, blank=True)
     strategy = models.CharField(max_length=50, null=True, blank=True)
     event_type = models.CharField(max_length=50, null=True, blank=True)
     url = models.CharField(max_length=50, null=True, blank=True)
     xpath = models.CharField(max_length=50, null=True, blank=True)
 
 class Scheduler(models.Model):
-    scheduler_id = models.CharField(primary_key = True, max_length=50, null=True, blank=True)
+    scheduler_id = models.CharField(primary_key = True, max_length=50,null=False, blank=True)
     cycle_time = models.IntegerField(null=False)
    
 
