@@ -37,11 +37,7 @@ class Customer(models.Model):
     # id = models.AutoField(primary_key=True,null=False)
     customer_id = models.CharField(primary_key=True, max_length=50,null=False, blank=True)
     ip_address = models.CharField(max_length=50, null=True, blank=True)
-    email = models.CharField(max_length=50, null=True, blank=True)
-    first_name = models.CharField(max_length=50, null=True, blank=True)
-    last_name = models.CharField(max_length=50, null=True, blank=True)
     username = models.CharField(max_length=30, null=True, blank=True)
-    phone = models.CharField(max_length=10, null=True, blank=True)
     token = models.CharField(max_length=100, null=True, blank=True)
 
 
@@ -52,6 +48,11 @@ class CustomerProfile(models.Model):
         ('male', 'male'), ('female', 'female')))
     city = models.CharField(max_length=150, null=True, blank=True)
     country = models.CharField(max_length=150, null=True, blank=True)
+    email = models.CharField(max_length=50, null=True, blank=True)
+    first_name = models.CharField(max_length=50, null=True, blank=True)
+    last_name = models.CharField(max_length=50, null=True, blank=True)
+    phone = models.CharField(max_length=10, null=True, blank=True)
+
 
 # New_product:
 class Product(models.Model):
