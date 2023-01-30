@@ -1913,6 +1913,8 @@ def get_capture(request):
 
     return Response({"aaaas"})
 
+
+from django.contrib.auth.models import User as USERX
 from datetime import datetime
 @api_view(['GET'])
 @authentication_classes([])

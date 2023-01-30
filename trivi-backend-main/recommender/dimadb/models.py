@@ -1,9 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
-
-
+# Create metadata mode
+class ManageAccount(models.Model):
+    created_at    = models.DateTimeField(auto_now_add=True, null=True)
+    user_name     = models.CharField(max_length=150, null=False, blank=True)
+    name_company  = models.CharField(max_length=150, null=False, blank=True)
+    database_name = models.CharField(max_length=150, null=False, blank=True)
+    token         = models.CharField(max_length=150, null=False, blank=True)
 
 # DB for Machine Learning Model
 
