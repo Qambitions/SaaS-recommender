@@ -1832,6 +1832,28 @@ df2 = pd.DataFrame(data = {'url': ['http://localhost:3000/product/{number}', 'ht
                     'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]','/html/body/div/div/div/div[2]/div/div/form/button'],
                     'statistic' : ['colab','login']})
 EXAMPLE_CURRENT_WEB  = df2
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def add_recommender_strategy(request):
+    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    print("test2 :", request.META.get('REMOTE_ADDR'))
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    if df_manageClient.shape[0] == 0:
+        return Response({"Chưa có đăng ký"})
+    DB_client = df_manageClient.iloc[0]['database_name']
+    body_json = json.loads(request.body)
+    list_append = []
+    for i in body_json['strategies']:
+        print(i)
+        x = RecommenderStrategy(strategy = i['strategy'], url = i['url'], xpath = i['xpath'])
+        list_append.append(x)
+    RecommenderStrategy.objects.using(DB_client).bulk_create(list_append)
+    return Response({"Done"})
+
 
 def check_path(x, click_path_send):
     if len(x) > len(click_path_send): 
@@ -1855,19 +1877,41 @@ def check_url(x, current_page):
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([])
+def get_database(request):
+    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    print("test2 :", request.META.get('REMOTE_ADDR'))
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    body_json = json.loads(request.body)
+    username  = body_json['username']
+    service   = body_json['service']
+    token     = ip_add
+    print(username,service)
+    x = ManageAccount(username = username, service = service, token = token, database_name="test2")
+    # TODO: check avalable db
+    x.save()
+    return Response({"aaaas"})
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
 def get_capture(request):
     print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
     print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    if df_manageClient.shape[0] == 0:
+        return Response({"Chưa có đăng ký"})
+    DB_client = df_manageClient.iloc[0]['database_name']
     
     body_json = json.loads(request.body)
     # todo: kiểm tra xem đang ở trang nào để có chiến lược phù hợp
     # query metadata
-    df_metadata = df2
-    print(body_json['current_page'])
-    
+    df_metadata =  pd.DataFrame(RecommenderStrategy.objects.using(DB_client).all().values())
+
     # df_path = df_metadata[df_metadata.url == body_json['current_page']]
     df_path = df_metadata
     df_path['check_url'] = df_path['url'].apply(check_url,current_page = body_json['current_page'])
@@ -1876,17 +1920,17 @@ def get_capture(request):
         return Response({"1 không có chiến lược"})
 
     # Todo: query product path of page
-    click_path_send = body_json['path'].split(' > ')
+    click_path_send = body_json['xpath'].split(' > ')
     click_path_send = list(reversed(click_path_send))
     print(click_path_send)
-    df_path['path'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
-    df_path['path'] = df_path['path'].str[1:]
-    df_path['path'] = df_path['path'].str.split('/')
-    df_path['check_path'] = df_path['path'].apply(check_path,click_path_send = click_path_send)
+    df_path['xpath'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
+    df_path['xpath'] = df_path['xpath'].str[1:]
+    df_path['xpath'] = df_path['xpath'].str.split('/')
+    df_path['check_path'] = df_path['xpath'].apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
         return Response({"2 không có chiến lược"})
-    statistic = df_click['statistic'].iat[0]
+    statistic = df_click['strategy'].iat[0]
     print(statistic)
     
     # todo: add session and event
@@ -1894,15 +1938,14 @@ def get_capture(request):
         #todo: add token
         login_statistic(body_json['text'], body_json['token'])
 
-    df_user = pd.DataFrame(Customer.objects.filter(token=body_json['token']).values())
+    df_user = pd.DataFrame(Customer.objects.using(DB_client).filter(token=body_json['token']).values())
     if df_user.shape[0] == 0:
         return Response({"3 không có user tương ứng"})
     
     # print(df_user.iloc[0]['cus_id'])
     ## TODO: insert record session
-    
     if statistic == 'colab':
-        list_product = predict_product(df_user.iloc[0]['cus_id'])
+        list_product = predict_product(df_user.iloc[0]['cus_id'],DB_client)
         return Response({'message': list_product},status=status.HTTP_200_OK)
     if statistic == 'demographic':
         ...
@@ -1914,7 +1957,8 @@ def get_capture(request):
     return Response({"aaaas"})
 
 
-from django.contrib.auth.models import User as USERX
+from .personalize_recommendation import test_ahihi
+from django.contrib.auth.models import User 
 from datetime import datetime
 @api_view(['GET'])
 @authentication_classes([])
@@ -1924,18 +1968,19 @@ def test(request):
     df_customer = pd.DataFrame(Customer.objects.filter(token='x').values())
     # df_customer = Customer.objects.filter(token='fadfadfsdf').values_list('cus_id', flat=True)
     # print(df_customer)
-    Customer.objects.filter(username='test_ahi').update(token='aaaaa')
-    xx = "http://localhost:3000/product/{number}"
-    print(xx.replace("{number}","[0-9]*"))
-    # print(Customer.objects.aggregate(max_cus = Max('cus_id')))
-    session_user = Session.objects.filter(customer_id='1000006')
-    max_time     = session_user.aggregate(max_time=Max('end_time'))['max_time']
-    min_time     = session_user.aggregate(max_time=Min('end_time'))['max_time']
-    record       = session_user.filter(end_time = max_time)
-    print(max_time > min_time + timedelta(minutes=15))
-    print(Session.objects.all()[4].customer_id)
-    now_time     = datetime.now()
-    x = Session(start_time = now_time, end_time = now_time, customer_id = '1000000')
-    x.save()
-    print("aaa",session_user.aggregate(max_time=Max('end_time'))['max_time'])
+    # Customer.objects.filter(username='test_ahi').update(token='aaaaa')
+    # xx = "http://localhost:3000/product/{number}"
+    # print(xx.replace("{number}","[0-9]*"))
+    # # print(Customer.objects.aggregate(max_cus = Max('cus_id')))
+    # session_user = Session.objects.filter(customer_id='1000006')
+    # max_time     = session_user.aggregate(max_time=Max('end_time'))['max_time']
+    # min_time     = session_user.aggregate(max_time=Min('end_time'))['max_time']
+    # record       = session_user.filter(end_time = max_time)
+    # print(max_time > min_time + timedelta(minutes=15))
+    # print(Session.objects.all()[4].customer_id)
+    # now_time     = datetime.now()
+    # x = Session(start_time = now_time, end_time = now_time, customer_id = '1000000')
+    # x.save()
+    # print("aaa",session_user.aggregate(max_time=Max('end_time'))['max_time'])
+    test_ahihi()
     return Response({"aaaas"})

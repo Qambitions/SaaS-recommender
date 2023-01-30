@@ -159,14 +159,30 @@ class RetailModel(tfrs.models.Model,metaclass = SingletonMeta):
 
         return self.task(query_embeddings, item_embeddings)
 
+class testt():
+    def __init__(self,num):
+        super().__init__()
+        self.a = num
+        cnt=0
+        while cnt < 100_000_000:
+            cnt+=1
+        print(cnt)
+
+list_test = [testt(1),testt(2),testt(3)]
+
 def load_model():
     ...
 
 def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
 
-def predict_product(user, top_n=3):
+def test_ahihi():
+    print(list_test[0].a)
+
+def predict_product(user, top_n=3,DB_client = ""):
     # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
+    user = {f"customer_id":[user]}
+    user = to_dictionary(user)
     tmp = InitClass()
     unique_user_ids                 = tmp.unique_user_ids               
     unique_product_id               = tmp.unique_product_id             
@@ -174,8 +190,7 @@ def predict_product(user, top_n=3):
     product_popular_scores_buckets  = tmp.product_popular_scores_buckets
     products                        = tmp.products                      
     ratings                         = tmp.ratings
-    user = {f"customer_id":[user]}
-    user = to_dictionary(user)
+    
     #TODO: load from db
     model = RetailModel()
     model.load_weights('./model/content_model_weights')

@@ -3,12 +3,13 @@ from django.contrib.auth.models import User
 
 # Create metadata mode
 class ManageAccount(models.Model):
+    username      = models.CharField(max_length=150, primary_key=True, blank=True, unique=True)
     created_at    = models.DateTimeField(auto_now_add=True, null=True)
-    user_name     = models.CharField(max_length=150, null=False, blank=True)
     name_company  = models.CharField(max_length=150, null=False, blank=True)
     database_name = models.CharField(max_length=150, null=False, blank=True)
+    service       = models.CharField(max_length=150, null=False, blank=True)
     token         = models.CharField(max_length=150, null=False, blank=True)
-
+    
 # DB for Machine Learning Model
 
 class LdaSimilarityVersion(models.Model):
@@ -61,7 +62,7 @@ class CustomerProfile(models.Model):
 # New_product:
 class Product(models.Model):
     # id = models.AutoField(primary_key=True,null=False)
-    product_id = models.CharField(primary_key=True, max_length=50, unique=True)
+    product_id = models.CharField(primary_key=True,max_length=150, unique=True)
     product_name = models.CharField(max_length=150, null=True, blank=True)
     category = models.CharField(max_length=150, null=True, blank=True)
     price = models.IntegerField(null=True, blank=True)
@@ -72,7 +73,7 @@ class Product(models.Model):
 # Session
 class Session(models.Model):
     # id = models.AutoField(primary_key=True)
-    session_id = models.AutoField(primary_key=True, max_length=50,null=False, blank=True, unique=True)
+    session_id = models.AutoField(primary_key=True,null=False, blank=True, unique=True)
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
     customer_id = models.CharField(max_length=50, null=True, blank=True)
@@ -81,7 +82,7 @@ class Session(models.Model):
 # New_event:
 class WebEvent(models.Model):
     # id = models.AutoField(primary_key=True)
-    event_id = models.AutoField(primary_key=True, max_length=150, unique=True)
+    event_id = models.AutoField(primary_key=True, unique=True)
     event_type = models.CharField(max_length=150, null=True, blank=True)
     session_id = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
@@ -94,7 +95,7 @@ class EventItem(models.Model):
 
 class BusinessTransaction(models.Model):
     # id = models.AutoField(primary_key=True)
-    transaction_id = models.AutoField(primary_key=True, max_length=150, unique=True)
+    transaction_id = models.AutoField(primary_key=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     transaction_price = models.IntegerField(null=False)
     transaction_revenue = models.IntegerField(null=False)
@@ -123,14 +124,14 @@ class SimilarCustomer(models.Model):
 
 
 class RecommenderModel(models.Model):
-    model_id = models.CharField(primary_key = True, max_length=50,null=False, blank=True)
+    model_id = models.AutoField(primary_key = True,null=False, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     model_type = models.CharField(max_length=50, null=True, blank=True)
     model_result = models.BinaryField(null=True, blank=True)
 
 
 class RecommenderStrategy(models.Model):
-    id = models.CharField(primary_key = True, max_length=50,null=False, blank=True)
+    id = models.AutoField(primary_key = True,null=False, blank=True)
     strategy = models.CharField(max_length=50, null=True, blank=True)
     event_type = models.CharField(max_length=50, null=True, blank=True)
     url = models.CharField(max_length=50, null=True, blank=True)

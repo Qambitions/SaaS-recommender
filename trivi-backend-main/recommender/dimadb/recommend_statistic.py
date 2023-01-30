@@ -17,7 +17,7 @@ def login_statistic(user_name, token):
 
 def session_event_management(event_type, user_id, product = ""):
     # get session
-    session_user = CustomerSession.objects.filter(customer_id=user_id)
+    session_user = Session.objects.filter(customer_id=user_id)
     max_time     = session_user.aggregate(max_time=Max('end_time'))['max_time']
     now_time     = datetime.now()
     
@@ -25,7 +25,7 @@ def session_event_management(event_type, user_id, product = ""):
     session_id = ''
     if max_time + timedelta(minutes=15) < now_time:
         # create new session
-        x = CustomerSession(start_time = now_time, end_time = now_time, customer_id = user_id)
+        x = Session(start_time = now_time, end_time = now_time, customer_id = user_id)
         x.save()
         max_time = now_time
     record = session_user.filter(end_time = max_time)

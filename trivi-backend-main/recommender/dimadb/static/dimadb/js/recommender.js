@@ -402,7 +402,7 @@ async function send_capture(token, path,current_page,text) {
   // console.log('localhost:8000' + "/dimadb/get-capture/");
   console.log(JSON.stringify({
     token: token,
-    path : path,
+    xpath : path,
   }));
   try{
     response_api = await fetch(
@@ -412,7 +412,7 @@ async function send_capture(token, path,current_page,text) {
         method: "POST",
         body: JSON.stringify({
           token: token,
-          path : path,
+          xpath : path,
           current_page: current_page,
           text : text
         })
