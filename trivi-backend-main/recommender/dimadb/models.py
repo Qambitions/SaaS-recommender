@@ -66,7 +66,7 @@ class Product(models.Model):
     description = models.TextField(null=True, blank=True)
    
 # Session
-class CustomerSession(models.Model):
+class Session(models.Model):
     # id = models.AutoField(primary_key=True)
     session_id = models.AutoField(primary_key=True, max_length=50,null=False, blank=True, unique=True)
     start_time = models.DateTimeField(null=True, blank=True)
@@ -107,14 +107,14 @@ class TransactionItem(models.Model):
 
 # ProductSimilarity
 class SimilarProduct(models.Model):
-    prod_id1 = models.CharField(max_length=50, null=True, blank=True)
-    prod_id2 = models.CharField(max_length=50, null=True, blank=True)
+    product_id1 = models.CharField(max_length=50, null=True, blank=True)
+    product_id2 = models.CharField(max_length=50, null=True, blank=True)
     compatibility = models.DecimalField(max_digits=5, decimal_places=2)
 
 # CustomerSimilarity
 class SimilarCustomer(models.Model):
-    cus_id1 = models.CharField(max_length=50, null=True, blank=True)
-    cus_id2 = models.CharField(max_length=50, null=True, blank=True)
+    customer_id1 = models.CharField(max_length=50, null=True, blank=True)
+    customer_id2 = models.CharField(max_length=50, null=True, blank=True)
     compatibility = models.DecimalField(max_digits=5, decimal_places=2)
 
 
