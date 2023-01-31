@@ -1945,7 +1945,7 @@ def get_capture(request):
     # print(df_user.iloc[0]['cus_id'])
     ## TODO: insert record session
     if statistic == 'colab':
-        list_product = predict_product(df_user.iloc[0]['cus_id'],DB_client)
+        list_product = predict_product(df_user.iloc[0]['cus_id'],DB_client = DB_client)
         return Response({'message': list_product},status=status.HTTP_200_OK)
     if statistic == 'demographic':
         ...
@@ -1956,8 +1956,6 @@ def get_capture(request):
 
     return Response({"aaaas"})
 
-
-from .personalize_recommendation import test_ahihi
 from django.contrib.auth.models import User 
 from datetime import datetime
 @api_view(['GET'])
@@ -1965,7 +1963,7 @@ from datetime import datetime
 @permission_classes([])
 def test(request):
     # df_customer = Product.objects.all().values()
-    df_customer = pd.DataFrame(Customer.objects.filter(token='x').values())
+    # df_customer = pd.DataFrame(Customer.objects.filter(token='x').values())
     # df_customer = Customer.objects.filter(token='fadfadfsdf').values_list('cus_id', flat=True)
     # print(df_customer)
     # Customer.objects.filter(username='test_ahi').update(token='aaaaa')
@@ -1982,5 +1980,7 @@ def test(request):
     # x = Session(start_time = now_time, end_time = now_time, customer_id = '1000000')
     # x.save()
     # print("aaa",session_user.aggregate(max_time=Max('end_time'))['max_time'])
-    test_ahihi()
+    print(predict_product("1000000",DB_client='test1'))
+    # df_customer = pd.DataFrame(Customer.objects.using('test1').all().values())
+    # print(df_customer)
     return Response({"aaaas"})

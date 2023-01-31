@@ -10,8 +10,15 @@ import tensorflow as tf
 
 # import tensorflow_datasets as tfds
 import tensorflow_recommenders as tfrs
+from .models import *
+from datetime import datetime
+import string
+import random
 
-from dimadb.tmp import demo
+from dimadb.tmp import prepare_data
+
+def id_generator(size=7, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 # hyper parameter // normalize before
 
 # unique_user_ids                = None
@@ -29,22 +36,28 @@ class SingletonMeta(type):
             cls._instances[cls] = instance
         return cls._instances[cls]
 
-class InitClass(metaclass = SingletonMeta):
-    def __init__(self):
+class InitClass:
+    def __init__(self,DB_client):
         super().__init__() 
-        self.unique_user_ids,\
-            self.unique_product_id,\
-            self.unique_product_category,\
-            self.product_popular_scores_buckets,\
-            self.products,\
-            self.ratings = demo()
+        tmp = prepare_data(DB_client)
+        self.ready = True
+        if tmp==False:
+            self.ready = False
+            return
+
+        self.unique_user_ids                 = tmp[0]               
+        self.unique_product_id               = tmp[1] 
+        self.unique_product_category         = tmp[2]
+        self.product_popular_scores_buckets  = tmp[3]
+        self.products                        = tmp[4]
+        self.ratings                         = tmp[5]
 
 
-class UserModel(tf.keras.Model,metaclass = SingletonMeta):
-    def __init__(self):
+class UserModel(tf.keras.Model):
+    def __init__(self,DB_client):
         super().__init__()     
         # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-        tmp = InitClass()
+        tmp = InitClass(DB_client)
         unique_user_ids                 = tmp.unique_user_ids               
         unique_product_id               = tmp.unique_product_id             
         unique_product_category         = tmp.unique_product_category       
@@ -74,11 +87,11 @@ class UserModel(tf.keras.Model,metaclass = SingletonMeta):
             self.user_embedding(inputs["customer_id"])], axis=1)
         
 
-class ItemModel(tf.keras.Model,metaclass = SingletonMeta):
-    def __init__(self):
+class ItemModel(tf.keras.Model):
+    def __init__(self,DB_client):
         super().__init__()
         # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-        tmp = InitClass()
+        tmp = InitClass(DB_client)
         unique_user_ids                 = tmp.unique_user_ids               
         unique_product_id               = tmp.unique_product_id             
         unique_product_category         = tmp.unique_product_category       
@@ -112,36 +125,41 @@ class ItemModel(tf.keras.Model,metaclass = SingletonMeta):
         # print('2',self.popular_scores_embedding(inputs["popular_score"]))
         # print('3',self.category_embedding(inputs["product_category"]))
         return tf.concat([
-            self.title_embedding(inputs["prod_name"]),
-            self.popular_scores_embedding(inputs["prod_price"]),
-            self.category_embedding(inputs["prod_category"])
+            self.title_embedding(inputs["product_name"]),
+            self.popular_scores_embedding(inputs["price"]),
+            self.category_embedding(inputs["category"])
         ], axis=1)
 
-class RetailModel(tfrs.models.Model,metaclass = SingletonMeta):
-    def __init__(self):
+class RetailModel(tfrs.models.Model):
+    def __init__(self,DB_client):
         super().__init__()        
         # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-        tmp = InitClass()
-        unique_user_ids                 = tmp.unique_user_ids               
-        unique_product_id               = tmp.unique_product_id             
-        unique_product_category         = tmp.unique_product_category       
-        product_popular_scores_buckets  = tmp.product_popular_scores_buckets
-        products                        = tmp.products                      
-        ratings                         = tmp.ratings
+        tmp = InitClass(DB_client)
+        self.ready = True
+        if tmp.ready == False: 
+            self.ready = False
+            return
+
+        self.unique_user_ids                 = tmp.unique_user_ids               
+        self.unique_product_id               = tmp.unique_product_id             
+        self.unique_product_category         = tmp.unique_product_category       
+        self.product_popular_scores_buckets  = tmp.product_popular_scores_buckets
+        self.products                        = tmp.products                      
+        self.ratings                         = tmp.ratings
         ## user model is user model
         self.user_model = tf.keras.Sequential([
-                          UserModel(),
+                          UserModel(DB_client),
                           tf.keras.layers.Dense(12)])
         
         ## product model is the item model
         self.product_model = tf.keras.Sequential([
-                              ItemModel(),
+                              ItemModel(DB_client),
                               tf.keras.layers.Dense(12)])
         
         ## retrieval task, choose metrics
         self.task = tfrs.tasks.Retrieval(
                     metrics=tfrs.metrics.FactorizedTopK(
-                        candidates=products.batch(128).map(self.product_model)
+                        candidates=self.products.batch(128).map(self.product_model)
                     )
         )
 
@@ -153,52 +171,64 @@ class RetailModel(tfrs.models.Model,metaclass = SingletonMeta):
         
         query_embeddings = self.user_model({ "customer_id"           : features["customer_id"]})
         
-        item_embeddings = self.product_model({ "prod_name"      : features["prod_name"],
-                                               "prod_price"   : features["prod_price"],
-                                               "prod_category": features["prod_category"]})
+        item_embeddings = self.product_model({ "product_name"      : features["product_name"],
+                                               "price"   : features["price"],
+                                               "category": features["category"]})
 
         return self.task(query_embeddings, item_embeddings)
 
-class testt():
-    def __init__(self,num):
+class ListModel(metaclass = SingletonMeta):
+    def __init__(self,num=2):
         super().__init__()
-        self.a = num
-        cnt=0
-        while cnt < 100_000_000:
-            cnt+=1
-        print(cnt)
+        self.number_model = 2
+        self.list_model = {"test1"  : RetailModel('test1'),
+                            "test2" : RetailModel('test2')}
+    
+    def train_model(self, DB_client):
+        model = RetailModel(DB_client)
+        train = model.ratings.take(100000)
+        cached_train = train.shuffle(100_000).batch(1_000).cache()
+        model.fit(cached_train, epochs=5)
+        self.list_model[DB_client] = model
+        name = id_generator()
+        model.save_weights('./model/'+name, save_format='tf')
+        x = RecommenderModel(created_at = datetime.now(), model_type = "colab",model_result='./model/'+name)
+        x.save(using=DB_client)
 
-list_test = [testt(1),testt(2),testt(3)]
-
-def load_model():
-    ...
+def start_model():
+    models = ListModel()
 
 def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
 
-def test_ahihi():
-    print(list_test[0].a)
+def load_model(DB_client):
+    predict_model = models.list_model[DB_client]
+    #query path file
+    predict_model.load_weights('./model/content_model_weights')
 
 def predict_product(user, top_n=3,DB_client = ""):
     # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
     user = {f"customer_id":[user]}
     user = to_dictionary(user)
-    tmp = InitClass()
-    unique_user_ids                 = tmp.unique_user_ids               
-    unique_product_id               = tmp.unique_product_id             
-    unique_product_category         = tmp.unique_product_category       
-    product_popular_scores_buckets  = tmp.product_popular_scores_buckets
-    products                        = tmp.products                      
-    ratings                         = tmp.ratings
+    models = ListModel()
+    if models.list_model[DB_client].ready == False:
+        return "chưa có model"
+    
+    unique_user_ids                 = models.list_model[DB_client].unique_user_ids               
+    unique_product_id               = models.list_model[DB_client].unique_product_id             
+    unique_product_category         = models.list_model[DB_client].unique_product_category       
+    product_popular_scores_buckets  = models.list_model[DB_client].product_popular_scores_buckets
+    products                        = models.list_model[DB_client].products                      
+    ratings                         = models.list_model[DB_client].ratings
     
     #TODO: load from db
-    model = RetailModel()
-    model.load_weights('./model/content_model_weights')
+    predict_model =  load_model(DB_client)
+    
     # Create a model that takes in raw query features, and
-    index = tfrs.layers.factorized_top_k.BruteForce(model.user_model)
+    index = tfrs.layers.factorized_top_k.BruteForce(predict_model.user_model)
     # recommends movies out of the entire movies dataset.
     index.index_from_dataset(
-    tf.data.Dataset.zip((products.map(lambda x: x["prod_name"]).batch(100), products.batch(100).map(model.product_model)))
+    tf.data.Dataset.zip((products.map(lambda x: x["product_name"]).batch(100), products.batch(100).map(predict_model.product_model)))
     )
     # index.index(products.batch(128).map(model.product_model), products.batch(128))
 
@@ -213,29 +243,7 @@ def predict_product(user, top_n=3,DB_client = ""):
         list_predict.append(title.decode("utf-8"))
     return list_predict
 
-
-def train_model():
-    # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-    tmp = InitClass()
-    unique_user_ids                 = tmp.unique_user_ids               
-    unique_product_id               = tmp.unique_product_id             
-    unique_product_category         = tmp.unique_product_category       
-    product_popular_scores_buckets  = tmp.product_popular_scores_buckets
-    products                        = tmp.products                      
-    ratings                         = tmp.ratings
-    train = ratings.take(35000)
-    cached_train = train.shuffle(100_000).batch(1_000).cache()
-    model = RetailModel()
-    model.compile(optimizer=tf.keras.optimizers.Adagrad(0.1))
-    model.fit(cached_train, epochs=3)
-
 if __name__ == "__main__":
-    # train = ratings.take(35000)
-    # cached_train = train.shuffle(100_000).batch(1_000).cache()
-    # model = RetailModel()
-    # model.compile(optimizer=tf.keras.optimizers.Adagrad(0.1))
-    # model.fit(cached_train, epochs=3)
-    # model.save_weights('./model/content_model_weights', save_format='tf')
 
     print(predict_product("1000000"))
     a = InitClass()
