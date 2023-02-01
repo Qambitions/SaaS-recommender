@@ -127,7 +127,7 @@ class RecommenderModel(models.Model):
     model_id = models.AutoField(primary_key = True,null=False, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     model_type = models.CharField(max_length=50, null=True, blank=True)
-    model_result = models.CharField(max_length=150, null=True, blank=True)
+    model_path = models.CharField(max_length=150, null=True, blank=True)
 
 
 class RecommenderStrategy(models.Model):
