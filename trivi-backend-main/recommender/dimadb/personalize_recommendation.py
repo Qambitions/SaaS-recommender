@@ -216,7 +216,8 @@ def load_model(DB_client):
     max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
     record      = recomemnder.filter(created_at = max_time)
     path        = record[0].model_path
-    return predict_model.load_weights(path)
+    predict_model.load_weights(path) 
+    return predict_model
 
 def predict_product(user, top_n=3,DB_client = ""):
     # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()

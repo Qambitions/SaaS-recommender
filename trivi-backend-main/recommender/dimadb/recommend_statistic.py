@@ -32,8 +32,8 @@ def session_event_management(event_type, DB_client, user_id, product_url = ""):
         max_time = now_time
     record = session_user.filter(end_time = max_time)
     session_id = record[0].session_id
-    record[0].end_time = now_time
-    record[0].save(using = DB_client)
+    record.update(end_time = now_time)
+    # record[0].save(using = DB_client)
 
     e2 = WebEvent(event_type = event_type,session_id = session_id)
     e2.save(using = DB_client)
