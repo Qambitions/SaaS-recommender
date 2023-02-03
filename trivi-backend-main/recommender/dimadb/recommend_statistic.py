@@ -43,24 +43,32 @@ def session_event_management(event_type, DB_client, user_id, product_url = ""):
         # do nothing
         ...
     elif event_type == 'Click':
-        product_id = Product.objects.using(DB_client).filter(url=product_url)\
-                                .all()[0].product_id
-        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1)
+        product_filter = Product.objects.using(DB_client).filter(url=product_url)
+        if product_filter:
+            product_id = product_filter.all()[0].product_id
+        else: product_id = None
+        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1,price=0)
         e3.save(using = DB_client)
     elif event_type == 'View':
-        product_id = Product.objects.using(DB_client).filter(url=product_url)\
-                                .all()[0].product_id
-        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1)
+        product_filter = Product.objects.using(DB_client).filter(url=product_url)
+        if product_filter:
+            product_id = product_filter.all()[0].product_id
+        else: product_id = None
+        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1,price=0)
         e3.save(using = DB_client)
     elif event_type == 'Add to cart':
-        product_id = Product.objects.using(DB_client).filter(url=product_url)\
-                                .all()[0].product_id
-        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1)
+        product_filter = Product.objects.using(DB_client).filter(url=product_url)
+        if product_filter:
+            product_id = product_filter.all()[0].product_id
+        else: product_id = None
+        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1,price=0)
         e3.save(using = DB_client)
     elif event_type == 'Remove from cart':
-        product_id = Product.objects.using(DB_client).filter(url=product_url)\
-                                .all()[0].product_id
-        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1)
+        product_filter = Product.objects.using(DB_client).filter(url=product_url)
+        if product_filter:
+            product_id = product_filter.all()[0].product_id
+        else: product_id = None
+        e3 = EventItem(event_id= event_id,product_id = product_id,quantity = 1,price=0)
         e3.save(using = DB_client)
 
     return True 

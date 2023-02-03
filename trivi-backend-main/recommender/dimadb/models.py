@@ -89,7 +89,7 @@ class WebEvent(models.Model):
 
 class EventItem(models.Model):
     event_id = models.CharField(max_length=150)
-    product_id = models.CharField(max_length=50)
+    product_id = models.CharField(max_length=50,null=True)
     quantity = models.IntegerField(null=False)
     price = models.IntegerField(null=False)
 

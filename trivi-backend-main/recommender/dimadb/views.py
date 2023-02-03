@@ -1824,23 +1824,17 @@ def get_recommendation(request):
     except Exception as error:
         return Response({'message': error})
 
-# must delete late
-EXAMPLE_PATH_PRODUCT = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
-df2 = pd.DataFrame(data = {'url': ['http://localhost:3000/product/{number}', 'http://localhost:3000/user/dang-nhap'], 
-                    'name_page' : ['homepage', 'login'],
-                    'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]','/html/body/div/div/div/div[2]/div/div/form/button'],
-                    'statistic' : ['colab','login']})
-EXAMPLE_CURRENT_WEB  = df2
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([])
 def add_recommender_strategy(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
-    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    # print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    # print("test2 :", request.META.get('REMOTE_ADDR'))
+    # ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    # if ip_add is None:
+    #     ip_add = request.META.get('REMOTE_ADDR')
+    body_json = json.loads(request.body)
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(database_name=body_json['database_name']).values())
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
@@ -1930,11 +1924,12 @@ def get_capture(request):
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
         return Response({"2 không có chiến lược"})
+    event_type = df_click['event_type'].iat[0]
     statistic = df_click['strategy'].iat[0]
-    print(statistic)
+    print(event_type,statistic)
     
     # todo: add session and event
-    if statistic == 'login':
+    if event_type == 'Login':
         #todo: add token
         login_statistic(DB_client,body_json['text'], body_json['token'])
 
@@ -1943,7 +1938,7 @@ def get_capture(request):
         return Response({"3 không có user tương ứng"})
     
     
-    need_recommend = session_event_management(event_type=statistic, 
+    need_recommend = session_event_management(event_type=event_type, 
                             DB_client=DB_client,
                             user_id = df_user.iloc[0]['customer_id'],
                             product_url = body_json['current_page'])
