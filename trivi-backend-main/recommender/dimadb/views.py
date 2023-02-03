@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from datetime import date, datetime, timedelta
 from django.forms.models import model_to_dict
-
 from django.db.models import Q, Count, F, Sum, Max, Min
 from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
 from django.apps import apps
@@ -22,8 +21,8 @@ from google.analytics.data_v1beta.types import RunReportRequest
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 from slugify import slugify
-from .personalize_recommendation import predict_product
-from .recommend_statistic import login_statistic
+from .personalize_recommendation import predict_product,load_model,train_model
+from .recommend_statistic import login_statistic, session_event_management
 
 import pandas as pd
 import random
@@ -1825,23 +1824,17 @@ def get_recommendation(request):
     except Exception as error:
         return Response({'message': error})
 
-# must delete late
-EXAMPLE_PATH_PRODUCT = '/html/body/div/div/div[3]/div[2]/div[2]/a[1]/img'
-df2 = pd.DataFrame(data = {'url': ['http://localhost:3000/product/{number}', 'http://localhost:3000/user/dang-nhap'], 
-                    'name_page' : ['homepage', 'login'],
-                    'path'      : ['/html/body/div/div/div[3]/div[2]/div[2]/a[1]','/html/body/div/div/div/div[2]/div/div/form/button'],
-                    'statistic' : ['colab','login']})
-EXAMPLE_CURRENT_WEB  = df2
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([])
 def add_recommender_strategy(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
-    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    # print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    # print("test2 :", request.META.get('REMOTE_ADDR'))
+    # ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    # if ip_add is None:
+    #     ip_add = request.META.get('REMOTE_ADDR')
+    body_json = json.loads(request.body)
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(database_name=body_json['database_name']).values())
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
@@ -1877,7 +1870,7 @@ def check_url(x, current_page):
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([])
-def get_database(request):
+def allocate_database(request):
     print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
     print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -1911,7 +1904,8 @@ def get_capture(request):
     # todo: kiểm tra xem đang ở trang nào để có chiến lược phù hợp
     # query metadata
     df_metadata =  pd.DataFrame(RecommenderStrategy.objects.using(DB_client).all().values())
-
+    if df_metadata.shape[0] == 0:
+        return Response({"0 không có chiến lược"})
     # df_path = df_metadata[df_metadata.url == body_json['current_page']]
     df_path = df_metadata
     df_path['check_url'] = df_path['url'].apply(check_url,current_page = body_json['current_page'])
@@ -1930,34 +1924,53 @@ def get_capture(request):
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
         return Response({"2 không có chiến lược"})
+    event_type = df_click['event_type'].iat[0]
     statistic = df_click['strategy'].iat[0]
-    print(statistic)
+    print(event_type,statistic)
     
     # todo: add session and event
-    if statistic == 'login':
+    if event_type == 'Login':
         #todo: add token
-        login_statistic(body_json['text'], body_json['token'])
+        login_statistic(DB_client,body_json['text'], body_json['token'])
 
     df_user = pd.DataFrame(Customer.objects.using(DB_client).filter(token=body_json['token']).values())
     if df_user.shape[0] == 0:
         return Response({"3 không có user tương ứng"})
     
-    # print(df_user.iloc[0]['cus_id'])
-    ## TODO: insert record session
-    if statistic == 'colab':
-        list_product = predict_product(df_user.iloc[0]['cus_id'],DB_client = DB_client)
-        return Response({'message': list_product},status=status.HTTP_200_OK)
-    if statistic == 'demographic':
-        ...
-    if statistic == 'content':
-        ...
-    if statistic == 'hot':
-        ...
+    
+    need_recommend = session_event_management(event_type=event_type, 
+                            DB_client=DB_client,
+                            user_id = df_user.iloc[0]['customer_id'],
+                            product_url = body_json['current_page'])
+    if need_recommend:
+        if statistic == 'colab':
+            list_product = predict_product(df_user.iloc[0]['customer_id'],DB_client = DB_client)
+            return Response({'message': list_product},status=status.HTTP_200_OK)
+        if statistic == 'demographic':
+            ...
+        if statistic == 'content':
+            ...
+        if statistic == 'hot':
+            ...
 
     return Response({"aaaas"})
 
-from django.contrib.auth.models import User 
-from datetime import datetime
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def train_colab_model(request):
+    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    print("test2 :", request.META.get('REMOTE_ADDR'))
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    if df_manageClient.shape[0] == 0:
+        return Response({"Chưa có đăng ký"})
+    DB_client = df_manageClient.iloc[0]['database_name']
+    train_model(DB_client)
+    return Response({"Done"})
+
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
@@ -1980,7 +1993,8 @@ def test(request):
     # x = Session(start_time = now_time, end_time = now_time, customer_id = '1000000')
     # x.save()
     # print("aaa",session_user.aggregate(max_time=Max('end_time'))['max_time'])
-    print(predict_product("1000000",DB_client='test1'))
+    # print(predict_product("1000000",DB_client='test1'))
+    load_model(DB_client='test2')
     # df_customer = pd.DataFrame(Customer.objects.using('test1').all().values())
     # print(df_customer)
     return Response({"aaaas"})

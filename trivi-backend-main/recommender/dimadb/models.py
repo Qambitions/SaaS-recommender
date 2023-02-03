@@ -89,7 +89,7 @@ class WebEvent(models.Model):
 
 class EventItem(models.Model):
     event_id = models.CharField(max_length=150)
-    product_id = models.CharField(max_length=50)
+    product_id = models.CharField(max_length=50,null=True)
     quantity = models.IntegerField(null=False)
     price = models.IntegerField(null=False)
 
@@ -127,7 +127,7 @@ class RecommenderModel(models.Model):
     model_id = models.AutoField(primary_key = True,null=False, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     model_type = models.CharField(max_length=50, null=True, blank=True)
-    model_result = models.CharField(max_length=150, null=True, blank=True)
+    model_path = models.CharField(max_length=150, null=True, blank=True)
 
 
 class RecommenderStrategy(models.Model):

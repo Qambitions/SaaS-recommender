@@ -16,6 +16,7 @@ import string
 import random
 
 from dimadb.tmp import prepare_data
+from django.db.models import Q, Count, F, Sum, Max
 
 def id_generator(size=7, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
@@ -186,13 +187,14 @@ class ListModel(metaclass = SingletonMeta):
     
     def train_model(self, DB_client):
         model = RetailModel(DB_client)
+        model.compile(optimizer=tf.keras.optimizers.Adagrad(0.1))
         train = model.ratings.take(100000)
         cached_train = train.shuffle(100_000).batch(1_000).cache()
         model.fit(cached_train, epochs=5)
         self.list_model[DB_client] = model
         name = id_generator()
         model.save_weights('./model/'+name, save_format='tf')
-        x = RecommenderModel(created_at = datetime.now(), model_type = "colab",model_result='./model/'+name)
+        x = RecommenderModel(created_at = datetime.now(), model_type = "colab",model_path='./model/'+name)
         x.save(using=DB_client)
 
 def start_model():
@@ -201,10 +203,21 @@ def start_model():
 def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
 
+def train_model(DB_client):
+    models = ListModel()
+    models.train_model(DB_client)
+    return True  
+
 def load_model(DB_client):
+    models = ListModel()
     predict_model = models.list_model[DB_client]
     #query path file
-    predict_model.load_weights('./model/content_model_weights')
+    recomemnder = RecommenderModel.objects.using(DB_client)
+    max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
+    record      = recomemnder.filter(created_at = max_time)
+    path        = record[0].model_path
+    predict_model.load_weights(path) 
+    return predict_model
 
 def predict_product(user, top_n=3,DB_client = ""):
     # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
