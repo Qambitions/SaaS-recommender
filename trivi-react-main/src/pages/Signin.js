@@ -105,6 +105,7 @@ export default class Signin extends Component {
                         />
                       </InputGroup>
                     </Form.Group>
+
                     <Form.Group>
                       <Form.Group id="password" className="mb-4">
                         <Form.Label>Mot de passe</Form.Label>
@@ -131,6 +132,14 @@ export default class Signin extends Component {
                     <Button variant="primary" type="submit" className="w-100">
                       Se connecter
                     </Button>
+                    <div className="d-flex justify-content-center align-items-center mt-4">
+                  <span className="fw-normal">
+                    Create new account? 
+                    <Card.Link as={Link} to={Routes.Signup.path} className="fw-bold">
+                      {` Sign up `}
+                    </Card.Link>
+                  </span>
+                </div>
                   </Form>
                 </div>
               </Col>
