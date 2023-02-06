@@ -3,7 +3,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('home/', home),
+    path('get-clicks/', get_clicks),
     path('import-file/<item_type>/', import_json_file),
     path('import-api/<item_type>/', import_api),
     path('list-item/<item_type>/', ItemList.as_view()),
@@ -25,5 +25,6 @@ urlpatterns = [
     path('test/', test),
     path('allocate-database/', allocate_database),
     path('add-recommender-strategy/', add_recommender_strategy),
-    path('train-colab-model/', train_colab_model),
+    path('train-colab-model/', train_colab_model_api),
+    path('add-scheduler/', add_scheduler),
 ]

@@ -178,24 +178,46 @@ class RetailModel(tfrs.models.Model):
 
         return self.task(query_embeddings, item_embeddings)
 
+class HotModel():
+    def __init__(self,DB_client):
+        super().__init__()
+        web_event  =  pd.DataFrame(WebEvent.objects.using(DB_client).exclude(event_type = "Remove from cart").values())
+        event_item =  pd.DataFrame(EventItem.objects.using(DB_client).all().values())
+        self.ready = True
+        if web_event.shape[0] == 0 or event_item.shape[0] == 0:
+            self.ready = False
+            return
+        event_item.event_id = event_item.event_id.astype('int64')
+        df = web_event.merge(event_item,how="left", on = 'event_id')
+        groupby_object = df.groupby(by=['product_id'], as_index=True, sort=False)
+        # print(result[:top_n])
+        result   = groupby_object.size().reset_index(name='counts')
+        result   = result.sort_values(by=['counts'],ascending=False)
+        self.res = result
+
 class ListModel(metaclass = SingletonMeta):
     def __init__(self,num=2):
         super().__init__()
         self.number_model = 2
-        self.list_model = {"test1"  : RetailModel('test1'),
-                            "test2" : RetailModel('test2')}
+        # self.list_model_colab = {"test1"  : RetailModel('test1'),
+        #                         "test2" : RetailModel('test2')}
+
+        self.list_model_hot   = {"test1"  : HotModel('test1'),
+                                "test2" : HotModel('test2')}
     
-    def train_model(self, DB_client):
+    def train_model_colab(self, DB_client):
         model = RetailModel(DB_client)
         model.compile(optimizer=tf.keras.optimizers.Adagrad(0.1))
         train = model.ratings.take(100000)
         cached_train = train.shuffle(100_000).batch(1_000).cache()
         model.fit(cached_train, epochs=5)
-        self.list_model[DB_client] = model
+        self.list_model_colab[DB_client] = model
         name = id_generator()
         model.save_weights('./model/'+name, save_format='tf')
         x = RecommenderModel(created_at = datetime.now(), model_type = "colab",model_path='./model/'+name)
         x.save(using=DB_client)
+
+
 
 def start_model():
     models = ListModel()
@@ -203,14 +225,14 @@ def start_model():
 def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
 
-def train_model(DB_client):
+def train_model_colab(DB_client):
     models = ListModel()
-    models.train_model(DB_client)
+    models.train_model_colab(DB_client)
     return True  
 
 def load_model(DB_client):
     models = ListModel()
-    predict_model = models.list_model[DB_client]
+    predict_model = models.list_model_colab[DB_client]
     #query path file
     recomemnder = RecommenderModel.objects.using(DB_client)
     max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
@@ -219,20 +241,20 @@ def load_model(DB_client):
     predict_model.load_weights(path) 
     return predict_model
 
-def predict_product(user, top_n=3,DB_client = ""):
+def predict_product_colab(user, top_n=3,DB_client = ""):
     # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
     user = {f"customer_id":[user]}
     user = to_dictionary(user)
     models = ListModel()
-    if models.list_model[DB_client].ready == False:
+    if models.list_model_colab[DB_client].ready == False:
         return "chưa có model"
     
-    unique_user_ids                 = models.list_model[DB_client].unique_user_ids               
-    unique_product_id               = models.list_model[DB_client].unique_product_id             
-    unique_product_category         = models.list_model[DB_client].unique_product_category       
-    product_popular_scores_buckets  = models.list_model[DB_client].product_popular_scores_buckets
-    products                        = models.list_model[DB_client].products                      
-    ratings                         = models.list_model[DB_client].ratings
+    unique_user_ids                 = models.list_model_colab[DB_client].unique_user_ids               
+    unique_product_id               = models.list_model_colab[DB_client].unique_product_id             
+    unique_product_category         = models.list_model_colab[DB_client].unique_product_category       
+    product_popular_scores_buckets  = models.list_model_colab[DB_client].product_popular_scores_buckets
+    products                        = models.list_model_colab[DB_client].products                      
+    ratings                         = models.list_model_colab[DB_client].ratings
     
     #TODO: load from db
     predict_model =  load_model(DB_client)
@@ -256,8 +278,16 @@ def predict_product(user, top_n=3,DB_client = ""):
         list_predict.append(title.decode("utf-8"))
     return list_predict
 
+def predict_model_hot(top_n=3, DB_client = ""):
+    models = ListModel()
+    
+    if models.list_model_hot[DB_client].ready == False:
+        return "chưa có model"
+    result = models.list_model_hot[DB_client].res
+    return result[:top_n]
+
 if __name__ == "__main__":
 
-    print(predict_product("1000000"))
+    print(predict_product_colab("1000000"))
     a = InitClass()
     

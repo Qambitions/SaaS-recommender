@@ -138,7 +138,9 @@ class RecommenderStrategy(models.Model):
     xpath = models.CharField(max_length=50, null=True, blank=True)
 
 class Scheduler(models.Model):
-    scheduler_id = models.CharField(primary_key = True, max_length=50,null=False, blank=True)
+    scheduler_id = models.AutoField(primary_key = True,null=False, blank=True)
+    strategy = models.CharField(max_length=50, null=True, blank=True)
+    database_name = models.CharField(max_length=50, null=True, blank=True)
     cycle_time = models.IntegerField(null=False)
    
 

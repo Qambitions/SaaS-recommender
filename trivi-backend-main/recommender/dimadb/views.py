@@ -21,7 +21,7 @@ from google.analytics.data_v1beta.types import RunReportRequest
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 from slugify import slugify
-from .personalize_recommendation import predict_product,load_model,train_model
+from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot
 from .recommend_statistic import login_statistic, session_event_management
 
 import pandas as pd
@@ -34,6 +34,11 @@ import urllib3
 import dotenv
 import json
 import re
+import string
+import random
+
+def id_generator(size=7, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 # Read configure file
 base_dir = Path(__file__).resolve().parent.parent
@@ -57,86 +62,50 @@ ua_dimensions = ['ga:date', 'ga:eventCategory', 'ga:pagePath', 'ga:browser', 'ga
 ua_metrics = ['ga:totalEvents', 'ga:sessions']
 
 @api_view(['GET'])
-def home(request):
+@authentication_classes([])
+@permission_classes([])
+def get_clicks(request):
     try:
-        # Initialize KPI reports
-        web_activity_report = []
-        event_report = []
-        product_report = []
-        traffics = {}
-
-        # Total number of web activities (interactions)
-        web_activities_file = len(Interaction_f.objects.all())
-        web_activities_ga = Interaction_ga.objects.all().aggregate(Sum('event_count'))['event_count__sum']
-        if (web_activities_ga is None):
-            web_activities_ga = 0
-        web_activities = web_activities_file + web_activities_ga
-        # Total number of sessions (a session includes multiple interactions)
-        sessions_file = len(Interaction_f.objects.values('session_id').distinct())
-        sessions_ga = Interaction_ga.objects.all().aggregate(Sum('session_count'))['session_count__sum']
-        if (sessions_ga is None):
-            sessions_ga = 0
-        sessions = sessions_file + sessions_ga
-        # Total number of web activities by page location
-        pages_file = Interaction_f.objects.all().values('page_location').annotate(total=Count('page_location'))
-        pages_ga = Interaction_ga.objects.all().values('page_location').annotate(total=Sum('event_count'))
-        pages = list(pages_file) + list(pages_ga)
-        if (len(pages)):
-            pages = pd.DataFrame(pages).groupby(['page_location'], as_index=False).sum().to_dict('r')
-            pages = sorted(pages, key=lambda k : k['total'], reverse=True)
+        # body_json       = json.loads(request.body)
+        time_range        = request.GET['time']
+        product_id        = request.GET['product']
+        customer_id       = request.GET['customer_id']
+        username          = request.GET['username']
+        event_type        = request.GET['event_type']
+        # print(time_range,product_id)
+        enddate = datetime.today()
+        if time_range == 'week':
+            startdate = enddate - timedelta(days=6)
+        elif time_range == 'month':
+            startdate = enddate - timedelta(days=30)
+        elif time_range == 'year':
+            startdate = enddate - timedelta(days=365)
+        else:
+            return Response({'message': "thiếu dữ liệu"})
+        # print(startdate,enddate)
+        df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
+        DB_client = df_manageClient.iloc[0]['database_name']
+        if df_manageClient.shape[0] == 0:
+            return Response({"Chưa có đăng ký"})
+        session   = pd.DataFrame(Session.objects.using(DB_client).\
+                                filter(Q(customer_id = customer_id) if customer_id!="" else Q()).values())
+                                      
+        webevent  = pd.DataFrame(WebEvent.objects.using(DB_client).\
+                                filter(event_type = event_type).\
+                                filter(created_at__range = ['2022-02-06', '2023-02-06']).values())
         
-        # Total number of web activities by device categories
-        device_categories_file = Interaction_f.objects.all().values('device_category').annotate(total=Count('device_category'))
-        device_categories_ga = Interaction_ga.objects.all().values('device_category').annotate(total=Sum('event_count'))
-        device_categories = list(device_categories_ga) + list(device_categories_file)
-        for category in list(device_categories):
-            type = category['device_category']
-            if (type not in traffics):
-                traffics[type] = 0
-            traffics[type] += category['total']
+        itemevent = pd.DataFrame(EventItem.objects.using(DB_client).\
+                                filter(Q(product_id = product_id) if product_id!="" else Q()).values())
 
-        # Web activities report - Total number of web activities by event name
-        web_activity_data_file = Interaction_f.objects.all().values('event_name').annotate(total=Count('event_name'))
-        web_activity_data_ga = Interaction_ga.objects.all().values('event_name').annotate(total=Sum('event_count'))
-        web_activity_data = list(web_activity_data_file) + list(web_activity_data_ga)
-        if (len(web_activity_data)):
-            web_activity_data = pd.DataFrame(web_activity_data).groupby(['event_name'], as_index=False).sum().to_dict('r')
-            web_activity_report = [(item['event_name'], item['total']) for item in list(web_activity_data)]
-        # Cultural event report  - Total number of cultural events by event type
-        event_data = Events.objects.all().values('event_type').annotate(total=Count('event_type'))
-        event_report = [(item['event_type'], item['total']) for item in list(event_data)]
-        # Cutural product report - Total number of cultural products by product type
-        product_data = Products.objects.all().values('product_type').annotate(total=Count('product_type'))
-        product_report = [(item['product_type'], item['total']) for item in list(product_data)]
-
-        # Add info for report to generate charts
-        reports = [
-            {
-                'id': 'activity-chart',
-                'title': 'Statistiques d’activités Web par types',
-                'data': web_activity_report,
-                'type': 'pie',
-            },
-            {
-                'id': 'event-chart',
-                'title': 'Statistiques d’événements par types',
-                'data': event_report,
-                'type': 'column'
-            },
-            {
-                'id': 'product-chart',
-                'title': 'Statistiques d’articles par types',
-                'data': product_report,
-                'type': 'column'
-            },
-        ]
-
-        return Response({'reports': reports,
-                         'sessions': sessions,
-                         'webActivities': web_activities,
-                         'traffic': traffics,
-                         'pages': pages}, status=status.HTTP_200_OK)
-
+        webevent.session_id = webevent.session_id.astype('int64')
+        itemevent.event_id = itemevent.event_id.astype('int64')
+        df = session.merge(webevent,how='inner', on = 'session_id')
+        df = df.merge(itemevent,how='inner', on = 'event_id')
+        
+        groupby_object = df.groupby(by=['product_id'])
+        result   = groupby_object.size().reset_index(name='counts')
+        print(result)
+        return Response({'message': result})
     except Exception as exception:
         return Response({'message': exception})
 
@@ -1828,17 +1797,16 @@ def get_recommendation(request):
 @authentication_classes([])
 @permission_classes([])
 def add_recommender_strategy(request):
-    # print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    # print("test2 :", request.META.get('REMOTE_ADDR'))
-    # ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    # if ip_add is None:
-    #     ip_add = request.META.get('REMOTE_ADDR')
+    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    print("test2 :", request.META.get('REMOTE_ADDR'))
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
     body_json = json.loads(request.body)
-    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(database_name=body_json['database_name']).values())
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
-    body_json = json.loads(request.body)
     list_append = []
     for i in body_json['strategies']:
         print(i)
@@ -1885,6 +1853,29 @@ def allocate_database(request):
     # TODO: check avalable db
     x.save()
     return Response({"aaaas"})
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def add_scheduler(request):
+    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    print("test2 :", request.META.get('REMOTE_ADDR'))
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    if df_manageClient.shape[0] == 0:
+        return Response({"Chưa có đăng ký"})
+    DB_client = df_manageClient.iloc[0]['database_name']
+    body_json = json.loads(request.body)
+    list_append = []
+    for i in body_json['scheduler']:
+        print(i)
+        x = Scheduler(strategy = i['strategy'], cycle_time = i['cycle_time'], database_name = DB_client)
+        list_append.append(x)
+    Scheduler.objects.bulk_create(list_append)
+    
+    return Response({"Done"})
 
 @api_view(['POST'])
 @authentication_classes([])
@@ -1944,32 +1935,38 @@ def get_capture(request):
                             product_url = body_json['current_page'])
     if need_recommend:
         if statistic == 'colab':
-            list_product = predict_product(df_user.iloc[0]['customer_id'],DB_client = DB_client)
+            list_product = predict_product_colab(df_user.iloc[0]['customer_id'],DB_client = DB_client)
             return Response({'message': list_product},status=status.HTTP_200_OK)
         if statistic == 'demographic':
             ...
         if statistic == 'content':
             ...
         if statistic == 'hot':
-            ...
+            list_product = predict_model_hot(DB_client = DB_client)
+            return Response({'message': list_product},status=status.HTTP_200_OK)
 
     return Response({"aaaas"})
 
-@api_view(['GET'])
+@api_view(['POST'])
 @authentication_classes([])
 @permission_classes([])
-def train_colab_model(request):
+def train_colab_model_api(request):
     print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
     print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
-    if df_manageClient.shape[0] == 0:
-        return Response({"Chưa có đăng ký"})
-    DB_client = df_manageClient.iloc[0]['database_name']
-    train_model(DB_client)
-    return Response({"Done"})
+    try:
+        if df_manageClient.shape[0] == 0:
+            body_json = json.loads(request.body)
+            DB_client = body_json['database_name']
+        else:
+            DB_client = df_manageClient.iloc[0]['database_name']
+    except:
+        return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
+    train_model_colab(DB_client)
+    return Response({"Done"},status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @authentication_classes([])
@@ -1994,7 +1991,12 @@ def test(request):
     # x.save()
     # print("aaa",session_user.aggregate(max_time=Max('end_time'))['max_time'])
     # print(predict_product("1000000",DB_client='test1'))
-    load_model(DB_client='test2')
+    # load_model(DB_client='test2')
     # df_customer = pd.DataFrame(Customer.objects.using('test1').all().values())
     # print(df_customer)
+    # body_json = json.loads(request.body)
+    # print(body_json['database'])
+    # product = Product.objects.using("test2").filter(Q(product_id = 200003) if False else Q())
+    # print(product)
+    print(predict_model_hot(3,'test2'))
     return Response({"aaaas"})
