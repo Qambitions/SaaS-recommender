@@ -1,7 +1,8 @@
 
 export const Routes = {
     // pages
-    Presentation: { path: "/" },
+    // Presentation: { path: "/" },
+    Dashboard: {path: "/"},
     DashboardOverview: { path: "/dashboard/overview" },
     Transactions: { path: "/transactions" },
     Settings: { path: "/settings" },
@@ -60,5 +61,7 @@ export const Routes = {
     Tabs: { path: "/components/tabs" },
     Tooltips: { path: "/components/tooltips" },
     Toasts: { path: "/components/toasts" },
-    WidgetsComponent: { path: "/components/widgets" }
+    WidgetsComponent: { path: "/components/widgets" },
+    
+    Import: {path: "/import-data"}
 };

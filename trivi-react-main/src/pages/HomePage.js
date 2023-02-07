@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Route, Switch, Redirect } from "react-router-dom";
 import { Routes } from "../routes";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { ColorModeContext, useMode } from "../theme";
+
 
 // pages
 import Form from "./Form";
@@ -20,8 +23,12 @@ import ForgotPassword from "./ForgotPassword";
 import ImportHistory from "./ImportHistory";
 import SynchronizeGA from "./SynchronizeGA";
 
+import ImportData from "./Import";
+import Dashboard from "./Dashboard";
+
 // components
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../component/Sidebar";
+import Topbar from "../component/Topbar";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Preloader from "../components/Preloader";
@@ -60,6 +67,7 @@ import Tabs from "./components/Tabs";
 import Tooltips from "./components/Tooltips";
 import Toasts from "./components/Toasts";
 
+
 const RouteWithLoader = ({ component: Component, ...rest }) => {
   const [loaded, setLoaded] = useState(false);
   const login = localStorage.getItem('token') ? true : false;
@@ -74,7 +82,7 @@ const RouteWithLoader = ({ component: Component, ...rest }) => {
       {...rest}
       render={(props) =>
         login && rest.path === Routes.Signin.path ? (
-          <Redirect to={Routes.DashboardOverview.path} />
+          <Redirect to={Routes.Dashboard.path} />
         ) : (
           <>
             {" "}
@@ -89,6 +97,7 @@ const RouteWithLoader = ({ component: Component, ...rest }) => {
 const RouteWithSidebar = ({ component: Component, ...rest }) => {
   const [loaded, setLoaded] = useState(false);
   const login = localStorage.getItem('token') ? true : false;
+  const [isSidebar, setIsSidebar] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 1000);
@@ -108,6 +117,8 @@ const RouteWithSidebar = ({ component: Component, ...rest }) => {
     localStorage.setItem("settingsVisible", !showSettings);
   };
 
+  
+
   return (
     <Route
       {...rest}
@@ -115,16 +126,27 @@ const RouteWithSidebar = ({ component: Component, ...rest }) => {
         login ? (
           <>
             <Preloader show={loaded ? false : true} />
-            <Sidebar />
+            {/* <Sidebar /> */}
 
-            <main className="content">
+            <div className="app d-flex flex-row">
+              <Sidebar isSidebar={isSidebar}/>
+              <div>
+                  <Topbar setIsSidebar={setIsSidebar} />
+                  <Component {...props} />
+                  <Footer
+                    toggleSettings={toggleSettings}
+                    showSettings={showSettings}
+                  />
+              </div>
+            </div>
+            {/* <main className="content">
               <Navbar />
               <Component {...props} />
               <Footer
                 toggleSettings={toggleSettings}
                 showSettings={showSettings}
               />
-            </main>
+            </main> */}
           </>
         ) : (
           <Redirect to={Routes.Signin.path} />
@@ -134,183 +156,125 @@ const RouteWithSidebar = ({ component: Component, ...rest }) => {
   );
 };
 
-export default () => (
-  <Switch>
-    <RouteWithLoader exact path={Routes.Signin.path} component={Signin} />
-    <RouteWithLoader exact path={Routes.Signup.path} component={Signup} />
+export default () => {
+  const [theme, colorMode] = useMode();
+return (
+  <ColorModeContext.Provider value={colorMode}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Switch>
+        <RouteWithLoader exact path={Routes.Signin.path} component={Signin} />
+        <RouteWithLoader exact path={Routes.Signup.path} component={Signup} />
+        <RouteWithSidebar exact path={Routes.Dashboard.path} component={Dashboard} />
+        <RouteWithSidebar exact path={Routes.Import.path} component={ImportData} />
+        <Redirect to={Routes.NotFound.path} />
 
-    <RouteWithLoader
-      exact
-      path={Routes.NotFound.path}
-      component={NotFoundPage}
-    />
-    <RouteWithLoader
-      exact
-      path={Routes.ServerError.path}
-      component={ServerError}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.Presentation.path}
-      component={DashboardOverview}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.DashboardOverview.path}
-      component={DashboardOverview}
-    />
-    <RouteWithSidebar
-      exact
-      key="web-activity"
-      path={Routes.Activities.path}
-      component={ListItems}
-    />
-    <RouteWithSidebar
-      exact
-      key="google-analytic-report"
-      path={Routes.GoogleAnalyticReports.path}
-      component={ListItems}
-    />
-    <RouteWithSidebar
-      exact
-      key="event"
-      path={Routes.Events.path}
-      component={ListItems}
-    />
-    <RouteWithSidebar
-      exact
-      key="article"
-      path={Routes.Articles.path}
-      component={ListItems}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.SynchronizeGA.path}
-      component={SynchronizeGA}
-    />
-    <RouteWithSidebar path={Routes.ItemDetail.path} component={Form} />
-    <RouteWithSidebar path={Routes.ImportAPI.path} component={ImportAPI} />
-    <RouteWithSidebar path={Routes.ImportFile.path} component={ImportFile} />
-    <RouteWithSidebar path={Routes.ImportHistory.path} component={ImportHistory} />
-    <RouteWithSidebar path={Routes.DeleteItems.path} component={DeleteItems} />
-    <RouteWithSidebar
-      exact
-      path={Routes.Recommend.path}
-      component={Recommend}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.Configuration.path}
-      component={Configuration}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.Analytics.path}
-      component={Analytics}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.Documentation.path}
-      component={Documentation}
-    />
-    <RouteWithLoader
-      exact
-      path={Routes.ForgotPassword.path}
-      component={ForgotPassword}
-    />
-    <RouteWithSidebar exact path={Routes.Profile.path} component={Profile} />
-    <Redirect to={Routes.NotFound.path} />
-    {/* <RouteWithSidebar exact path={Routes.Profile.path} component={Profile} />
-    <RouteWithLoader exact path={Routes.Signup.path} component={Signup} />
-    <RouteWithLoader
-      exact
-      path={Routes.ForgotPassword.path}
-      component={ForgotPassword}
-    />
-    <RouteWithLoader
-      exact
-      path={Routes.ResetPassword.path}
-      component={ResetPassword}
-    />
-    <RouteWithLoader exact path={Routes.Lock.path} component={Lock} />
-    
-    <RouteWithSidebar exact path={Routes.Upgrade.path} component={Upgrade} />
-    <RouteWithSidebar
-      exact
-      path={Routes.Transactions.path}
-      component={Transactions}
-    />
-    <RouteWithSidebar exact path={Routes.Settings.path} component={Settings} />
-    <RouteWithSidebar
-      exact
-      path={Routes.BootstrapTables.path}
-      component={BootstrapTables}
-    /> */}
-    {/* components */}
-    {/* <RouteWithSidebar
-      exact
-      path={Routes.Accordions.path}
-      component={Accordion}
-    />
-    <RouteWithSidebar exact path={Routes.Alerts.path} component={Alerts} />
-    <RouteWithSidebar exact path={Routes.Badges.path} component={Badges} />
-    <RouteWithSidebar
-      exact
-      path={Routes.Breadcrumbs.path}
-      component={Breadcrumbs}
-    />
-    <RouteWithSidebar exact path={Routes.Buttons.path} component={Buttons} />
-    <RouteWithSidebar exact path={Routes.Forms.path} component={Forms} />
-    <RouteWithSidebar exact path={Routes.Modals.path} component={Modals} />
-    <RouteWithSidebar exact path={Routes.Navs.path} component={Navs} />
-    <RouteWithSidebar exact path={Routes.Navbars.path} component={Navbars} />
-    <RouteWithSidebar
-      exact
-      path={Routes.Pagination.path}
-      component={Pagination}
-    />
-    <RouteWithSidebar exact path={Routes.Popovers.path} component={Popovers} />
-    <RouteWithSidebar exact path={Routes.Progress.path} component={Progress} />
-    <RouteWithSidebar exact path={Routes.Tables.path} component={Tables} />
-    <RouteWithSidebar exact path={Routes.Tabs.path} component={Tabs} />
-    <RouteWithSidebar exact path={Routes.Tooltips.path} component={Tooltips} />
-    <RouteWithSidebar exact path={Routes.Toasts.path} component={Toasts} /> */}
+      </Switch>
+      {/* {login ? 
+      <>
+              <div className="app d-flex flex-row">
+        <Sidebar isSidebar={isSidebar}/>
+        <div>
+            <Topbar setIsSidebar={setIsSidebar} />
+            <Switch>
+                
+                <RouteWithSidebar exact path={Routes.Dashboard.path} component={Dashboard} />
+                <Route exact path={Routes.Import.path} component={ImportData} />
+                 */}
+                {/* <Route
+                  exact
+                  path={Routes.NotFound.path}
+                  component={NotFoundPage}
+                />
+                <RouteWithLoader
+                  exact
+                  path={Routes.ServerError.path}
+                  component={ServerError}
+                />
+                <RouteWithSidebar
+                  exact
+                  path={Routes.Presentation.path}
+                  component={DashboardOverview}
+                />
+                <RouteWithSidebar
+                  exact
+                  path={Routes.DashboardOverview.path}
+                  component={DashboardOverview}
+                />
+                <RouteWithSidebar
+                  exact
+                  key="web-activity"
+                  path={Routes.Activities.path}
+                  component={ListItems}
+                />
+                <RouteWithSidebar
+                  exact
+                  key="google-analytic-report"
+                  path={Routes.GoogleAnalyticReports.path}
+                  component={ListItems}
+                />
+                <RouteWithSidebar
+                  exact
+                  key="event"
+                  path={Routes.Events.path}
+                  component={ListItems}
+                />
+                <RouteWithSidebar
+                  exact
+                  key="article"
+                  path={Routes.Articles.path}
+                  component={ListItems}
+                />
+                <RouteWithSidebar
+                  exact
+                  path={Routes.SynchronizeGA.path}
+                  component={SynchronizeGA}
+                />
+                <RouteWithSidebar path={Routes.ItemDetail.path} component={Form} />
+                <RouteWithSidebar path={Routes.ImportAPI.path} component={ImportAPI} />
+                <RouteWithSidebar path={Routes.ImportFile.path} component={ImportFile} />
+                <RouteWithSidebar path={Routes.ImportHistory.path} component={ImportHistory} />
+                <RouteWithSidebar path={Routes.DeleteItems.path} component={DeleteItems} />
+                <RouteWithSidebar
+                  exact
+                  path={Routes.Recommend.path}
+                  component={Recommend}
+                />
+                <RouteWithSidebar
+                  exact
+                  path={Routes.Configuration.path}
+                  component={Configuration}
+                />
+                <RouteWithSidebar
+                  exact
+                  path={Routes.Analytics.path}
+                  component={Analytics}
+                />
+                <RouteWithSidebar
+                  exact
+                  path={Routes.Documentation.path}
+                  component={Documentation}
+                />
+                <RouteWithLoader
+                  exact
+                  path={Routes.ForgotPassword.path}
+                  component={ForgotPassword}
+                />
+                <RouteWithSidebar exact path={Routes.Profile.path} component={Profile} /> */}
+                {/* <Redirect to={Routes.NotFound.path} />
+            </Switch>
+        </div>
+      </div>
+        
+      </> : 
+      <>
+        <RouteWithLoader exact path={Routes.Signin.path} component={Signin} />
+        <RouteWithLoader exact path={Routes.Signup.path} component={Signup} />
 
-    {/* documentation */}
-    {/* <RouteWithSidebar
-      exact
-      path={Routes.DocsOverview.path}
-      component={DocsOverview}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.DocsDownload.path}
-      component={DocsDownload}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.DocsQuickStart.path}
-      component={DocsQuickStart}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.DocsLicense.path}
-      component={DocsLicense}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.DocsFolderStructure.path}
-      component={DocsFolderStructure}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.DocsBuild.path}
-      component={DocsBuild}
-    />
-    <RouteWithSidebar
-      exact
-      path={Routes.DocsChangelog.path}
-      component={DocsChangelog}
-    /> */}
-  </Switch>
+      </>} */}
+      
+      
+    </ThemeProvider>
+  </ColorModeContext.Provider>
 );
+      }
