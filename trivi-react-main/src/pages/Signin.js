@@ -1,4 +1,4 @@
-import React, { Component, useContext } from "react";
+import React, { Component } from "react";
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faUnlockAlt } from "@fortawesome/free-solid-svg-icons";
@@ -56,14 +56,14 @@ export default class Signin extends Component {
           localStorage.setItem('userName', json.user.username);
           this.props.history.push("/");
         } else {
-          alert("Votre compte utilisateur est invalide");
+          alert("User is not valid!! Please check your username or password again.");
         }
       })
       .catch((err) => alert(err));
   };
 
   render() {
-    TabTitle("Se connecter");
+    TabTitle("Log in");
 
     return (
       <main className="bg-dark vh-100">
@@ -130,10 +130,10 @@ export default class Signin extends Component {
                       </div> */}
                     </Form.Group>
                     <Button variant="primary" type="submit" className="w-100">
-                      Se connecter
+                      Log in
                     </Button>
                     <div className="d-flex justify-content-center align-items-center mt-4">
-                  <span className="fw-normal">
+                  <span className="fw-normal text-black">
                     Create new account? 
                     <Card.Link as={Link} to={Routes.Signup.path} className="fw-bold">
                       {` Sign up `}
