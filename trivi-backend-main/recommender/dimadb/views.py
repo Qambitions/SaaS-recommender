@@ -109,6 +109,11 @@ def get_clicks(request):
     except Exception as exception:
         return Response({'message': exception})
 
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def get_recommend_user(request):
+    ...
 
 class ItemList(APIView):  
     # Get list of items (all rows) from a table
@@ -1968,6 +1973,7 @@ def train_colab_model_api(request):
     train_model_colab(DB_client)
     return Response({"Done"},status=status.HTTP_200_OK)
 
+from .personalize_recommendation import magic_test
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
@@ -1998,5 +2004,6 @@ def test(request):
     # print(body_json['database'])
     # product = Product.objects.using("test2").filter(Q(product_id = 200003) if False else Q())
     # print(product)
-    print(predict_model_hot(3,'test2'))
+    # print(predict_model_hot(3,'test2'))
+    magic_test('test2')
     return Response({"aaaas"})
