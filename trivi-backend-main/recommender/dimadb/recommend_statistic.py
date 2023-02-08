@@ -14,7 +14,7 @@ from asgiref.sync import sync_to_async
 from django.utils import timezone
 
 def login_statistic(DB_client, user_name, token):
-    print(user_name, token)
+    # print(user_name, token)
     x = Customer.objects.using(DB_client).filter(username=user_name).update(token=token)
 
 def session_event_management(event_type, DB_client, user_id, product_url = ""):
@@ -22,10 +22,10 @@ def session_event_management(event_type, DB_client, user_id, product_url = ""):
     session_user = Session.objects.using(DB_client).filter(customer_id=user_id)
     max_time     = session_user.aggregate(max_time=Max('end_time'))['max_time']
     now_time     = timezone.now()
-    print(max_time)
+    # print(product_url)
     # upsert session
     session_id = ''
-    if max_time + timedelta(minutes=15) < now_time:
+    if max_time is None or  max_time + timedelta(minutes=15) < now_time:
         # create new session
         e1 = Session(start_time = now_time, end_time = now_time, customer_id = user_id)
         e1.save(using = DB_client)

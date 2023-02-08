@@ -23,7 +23,7 @@ from google.analytics.data_v1beta.types import RunReportRequest
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 from slugify import slugify
-from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot
+from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot,predict_model_demographic,train_model_demographic
 from .recommend_statistic import login_statistic, session_event_management
 
 import pandas as pd
@@ -1808,8 +1808,6 @@ def get_recommendation(request):
 @authentication_classes([])
 @permission_classes([])
 def add_recommender_strategy(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
@@ -1821,7 +1819,6 @@ def add_recommender_strategy(request):
     DB_client = df_manageClient.iloc[0]['database_name']
     list_append = []
     for i in body_json['strategies']:
-        print(i)
         x = RecommenderStrategy(strategy = i['strategy'],event_type=i['event_type'], url = i['url'], xpath = i['xpath'])
         list_append.append(x)
     RecommenderStrategy.objects.using(DB_client).bulk_create(list_append)
@@ -1851,8 +1848,6 @@ def check_url(x, current_page):
 @authentication_classes([])
 @permission_classes([])
 def allocate_database(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add      = request.META.get('REMOTE_ADDR')
@@ -1861,7 +1856,7 @@ def allocate_database(request):
     service         = body_json['service']
     database_name   = body_json['database_name']
     token     = ip_add
-    print(username,service)
+
     db_conn = connections[database_name]
     try:
         c = db_conn.cursor()
@@ -1879,8 +1874,6 @@ def allocate_database(request):
 @authentication_classes([])
 @permission_classes([])
 def add_scheduler(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
@@ -1891,7 +1884,6 @@ def add_scheduler(request):
     body_json = json.loads(request.body)
     list_append = []
     for i in body_json['scheduler']:
-        print(i)
         x = Scheduler(strategy = i['strategy'], cycle_time = i['cycle_time'], database_name = DB_client)
         list_append.append(x)
     Scheduler.objects.bulk_create(list_append)
@@ -1902,8 +1894,6 @@ def add_scheduler(request):
 @authentication_classes([])
 @permission_classes([])
 def get_capture(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
@@ -1913,7 +1903,6 @@ def get_capture(request):
     DB_client = df_manageClient.iloc[0]['database_name']
     
     body_json = json.loads(request.body)
-    # todo: kiểm tra xem đang ở trang nào để có chiến lược phù hợp
     # query metadata
     df_metadata =  pd.DataFrame(RecommenderStrategy.objects.using(DB_client).all().values())
     if df_metadata.shape[0] == 0:
@@ -1923,28 +1912,29 @@ def get_capture(request):
     df_path['check_url'] = df_path['url'].apply(check_url,current_page = body_json['current_page'])
     df_path = df_path[df_path['check_url']==True]
     if df_path.shape[0] == 0:
-        return Response({"1 không có chiến lược"})
+        return Response({"1 không có chiến lược ở trang này"})
 
-    # Todo: query product path of page
+    # check xpath
     click_path_send = body_json['xpath'].split(' > ')
     click_path_send = list(reversed(click_path_send))
-    print(click_path_send)
+    # print(click_path_send)
     df_path['xpath'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
     df_path['xpath'] = df_path['xpath'].str[1:]
     df_path['xpath'] = df_path['xpath'].str.split('/')
     df_path['check_path'] = df_path['xpath'].apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
-        return Response({"2 không có chiến lược"})
+        return Response({"2 không có chiến lược ở đường click"})
     event_type = df_click['event_type'].iat[0]
     statistic = df_click['strategy'].iat[0]
-    print(event_type,statistic)
+    # print(event_type,statistic)
     
     # todo: add session and event
     if event_type == 'Login':
-        #todo: add token
-        login_statistic(DB_client,body_json['text'], body_json['token'])
-
+        new_token = id_generator(14)
+        login_statistic(DB_client,body_json['text'], new_token)
+        body_json['token'] = new_token
+        
     df_user = pd.DataFrame(Customer.objects.using(DB_client).filter(token=body_json['token']).values())
     if df_user.shape[0] == 0:
         return Response({"3 không có user tương ứng"})
@@ -1954,26 +1944,27 @@ def get_capture(request):
                             DB_client=DB_client,
                             user_id = df_user.iloc[0]['customer_id'],
                             product_url = body_json['current_page'])
+    if event_type == 'Login':
+        return Response({"message":"login","token":new_token})
     if need_recommend:
         if statistic == 'colab':
             list_product = predict_product_colab(df_user.iloc[0]['customer_id'],DB_client = DB_client)
             return Response({'message': list_product},status=status.HTTP_200_OK)
         if statistic == 'demographic':
-            ...
+            list_product = predict_model_demographic(df_user.iloc[0]['customer_id'],DB_client = DB_client)
+            return Response({'message': list_product},status=status.HTTP_200_OK)
         if statistic == 'content':
             ...
         if statistic == 'hot':
             list_product = predict_model_hot(DB_client = DB_client)
             return Response({'message': list_product},status=status.HTTP_200_OK)
 
-    return Response({"aaaas"})
+    return Response({"Nothing"})
 
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([])
 def train_colab_model_api(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
@@ -1993,8 +1984,6 @@ def train_colab_model_api(request):
 @authentication_classes([])
 @permission_classes([])
 def train_demographic_model_api(request):
-    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
-    print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
@@ -2007,7 +1996,7 @@ def train_demographic_model_api(request):
             DB_client = df_manageClient.iloc[0]['database_name']
     except:
         return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
-    train_demographic_model_api(DB_client)
+    train_model_demographic(DB_client)
     return Response({"Done"},status=status.HTTP_200_OK)
 
 from .personalize_recommendation import magic_test

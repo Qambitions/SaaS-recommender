@@ -33,7 +33,7 @@ class SingletonMeta(type):
             cls._instances[cls] = instance
         return cls._instances[cls]
 
-class InitClass:
+class InitClass_colab:
     def __init__(self,DB_client):
         super().__init__() 
         tmp = prepare_data(DB_client)
@@ -49,12 +49,18 @@ class InitClass:
         self.products                        = tmp[4]
         self.ratings                         = tmp[5]
 
+class ListinitClass_colab(metaclass = SingletonMeta):
+    def __init__(self):
+        super().__init__() 
+        self.init = {"test1"  : InitClass_colab('test1'),
+                                "test2" : InitClass_colab('test2')}
 
 class UserModel(tf.keras.Model):
     def __init__(self,DB_client):
         super().__init__()     
         # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-        tmp = InitClass(DB_client)
+        list_init = ListinitClass_colab()
+        tmp = list_init.init[DB_client]
         unique_user_ids                 = tmp.unique_user_ids               
         unique_product_id               = tmp.unique_product_id             
         unique_product_category         = tmp.unique_product_category       
@@ -88,7 +94,8 @@ class ItemModel(tf.keras.Model):
     def __init__(self,DB_client):
         super().__init__()
         # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-        tmp = InitClass(DB_client)
+        list_init = ListinitClass_colab()
+        tmp = list_init.init[DB_client]
         unique_user_ids                 = tmp.unique_user_ids               
         unique_product_id               = tmp.unique_product_id             
         unique_product_category         = tmp.unique_product_category       
@@ -130,8 +137,8 @@ class ItemModel(tf.keras.Model):
 class RetailModel(tfrs.models.Model):
     def __init__(self,DB_client):
         super().__init__()        
-        # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
-        tmp = InitClass(DB_client)
+        list_init = ListinitClass_colab()
+        tmp = list_init.init[DB_client]
         self.ready = True
         if tmp.ready == False: 
             self.ready = False
@@ -214,11 +221,11 @@ class ListModel(metaclass = SingletonMeta):
     def __init__(self,num=2):
         super().__init__()
         self.number_model = 2
-        # self.list_model_colab = {"test1"  : RetailModel('test1'),
-        #                         "test2" : RetailModel('test2')}
+        self.list_model_colab = {"test1"  : RetailModel('test1'),
+                                "test2" : RetailModel('test2')}
 
-        # self.list_model_hot   = {"test1"  : HotModel('test1'),
-        #                         "test2" : HotModel('test2')}
+        self.list_model_hot   = {"test1"  : HotModel('test1'),
+                                "test2" : HotModel('test2')}
 
         self.list_model_demographic = {"test1"  : DemographicModel('test1'),
                                 "test2" : DemographicModel('test2')}
@@ -240,7 +247,6 @@ class ListModel(metaclass = SingletonMeta):
 
     def train_model_demographic(self, DB_client):
         model_class = DemographicModel(DB_client)
-        print("aaa")
         model = model_class.model
         model.fit(model_class.data)
         self.list_model_demographic[DB_client] = model_class
@@ -261,7 +267,7 @@ def train_model_colab(DB_client):
     models.train_model_colab(DB_client)
     return True  
 
-def train_model_demo(DB_client):
+def train_model_demographic(DB_client):
     models = ListModel()
     models.train_model_demographic(DB_client)
     return True  
@@ -277,7 +283,7 @@ def load_model_colab(DB_client):
     predict_model.load_weights(path) 
     return predict_model
 
-def load_model_demo(DB_client):
+def load_model_demographic(DB_client):
     models = ListModel()
     predict_model = models.list_model_demographic[DB_client].model
     recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "demo")
@@ -333,21 +339,19 @@ def predict_model_hot(top_n=3, DB_client = ""):
     result = models.list_model_hot[DB_client].res
     return result[:top_n]
 
-def predict_model_demo(user, top_n=3, DB_client = ""):
+def predict_model_demographic(user, top_n=3, DB_client = ""):
     models = ListModel()
     if models.list_model_demographic[DB_client].ready == False:
         return "chưa có model"
-    predict_model =  load_model_demo(DB_client)
+    predict_model =  load_model_demographic(DB_client)
     df_cus = pd.DataFrame(CustomerProfile.objects.using(DB_client).values())
     df_cus['age'] = df_cus['dob'].apply(calculate_age)
     df_cus['city_label']   = df_cus['city'].rank(method='dense', ascending=True).astype(int)
     df_cus['gender_label'] = df_cus['gender'].rank(method='dense', ascending=True).astype(int)
     df_cus['clustering']   = predict_model.predict(df_cus[['city_label','gender_label','age']])
     cluster_user = df_cus[df_cus['customer_id'] == user].iloc[0]['clustering']
-    print(cluster_user)
     df_tmp = df_cus[df_cus['clustering'] == cluster_user]
     list_user = df_tmp['customer_id'].tolist()
-    print(list_user)
     session   = pd.DataFrame(Session.objects.using(DB_client).\
                                 filter(customer_id__in = list_user).values())
     web_event  =  pd.DataFrame(WebEvent.objects.using(DB_client).exclude(event_type = "Remove from cart").values())
@@ -357,17 +361,19 @@ def predict_model_demo(user, top_n=3, DB_client = ""):
     df = session.merge(web_event,how='inner', on = 'session_id')
     df = df.merge(event_item,how='inner', on = 'event_id')
     groupby_object = df.groupby(by=['product_id'], as_index=True, sort=False)
-    # print(result[:top_n])
     result   = groupby_object.size().reset_index(name='counts')
     result   = result.sort_values(by=['counts'],ascending=False)
     return result[:top_n]
 
 def magic_test(DB_client):
     # train_model_demo(DB_client)
-    predict_model_demo("1000000",DB_client='test2')
+    # predict_model_demo("1000000",DB_client='test2')
+    ...
+
+start_model()
 
 if __name__ == "__main__":
 
     print(predict_product_colab("1000000"))
-    a = InitClass()
+    # a = InitClass()
     

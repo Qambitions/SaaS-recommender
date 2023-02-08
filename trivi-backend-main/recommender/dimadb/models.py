@@ -134,8 +134,8 @@ class RecommenderStrategy(models.Model):
     id = models.AutoField(primary_key = True,null=False, blank=True)
     strategy = models.CharField(max_length=50, null=True, blank=True)
     event_type = models.CharField(max_length=50, null=True, blank=True)
-    url = models.CharField(max_length=50, null=True, blank=True)
-    xpath = models.CharField(max_length=50, null=True, blank=True)
+    url = models.CharField(max_length=300, null=True, blank=True)
+    xpath = models.CharField(max_length=1000, null=True, blank=True)
 
 class Scheduler(models.Model):
     scheduler_id = models.AutoField(primary_key = True,null=False, blank=True)

@@ -324,14 +324,7 @@ function generateUserToken(length) {
 
 function checkCookie() {
   let user = getCookie("recommender_cookie");
-  if (user != "") {
-    return user
-  } else {
-    user = generateUserToken(16);
-    setCookie("recommender_cookie", user, 365);
-    //send to db
-    console.log('token',user)
-  }
+  return user
 }
 
 function getListViews(recommendations) {
@@ -400,10 +393,6 @@ function getListViews(recommendations) {
 async function send_capture(token, path,current_page,text) {
   // console.log(path, token);
   // console.log('localhost:8000' + "/dimadb/get-capture/");
-  console.log(JSON.stringify({
-    token: token,
-    xpath : path,
-  }));
   try{
     response_api = await fetch(
       // `http://localhost:8000/dimadb/get-capture?token=${token}&path=${path}`,
@@ -421,8 +410,10 @@ async function send_capture(token, path,current_page,text) {
     .then((result) => result.json())
     .then((result) => {
       console.log(result)
-       return result
-      
+        if (result['message'] == "login"){
+            setCookie("recommender_cookie", result['token'], 365);
+        }
+        return result
       })
     .catch((err) => []);
   }
@@ -453,9 +444,7 @@ function capture_event(e) {
     }
     var time = Math.floor(Date.now() / 1000);
     var product_href = window.location.href;
-    console.log(product_href)
     var event_path   = evt.composedPath();
-    console.log(event_path)
     list = []
     for (var i = 0; i < event_path.length; i++){
       list.push(event_path[i].localName.toLowerCase())

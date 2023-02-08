@@ -27,4 +27,5 @@ urlpatterns = [
     path('add-recommender-strategy/', add_recommender_strategy),
     path('train-colab-model/', train_colab_model_api),
     path('add-scheduler/', add_scheduler),
+    path('train-demographic-model/', train_demographic_model_api),
 ]
