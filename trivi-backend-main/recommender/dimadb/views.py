@@ -6,6 +6,8 @@ from datetime import date, datetime, timedelta
 from django.forms.models import model_to_dict
 from django.db.models import Q, Count, F, Sum, Max, Min
 from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
+from django.db import connections
+from django.db.utils import OperationalError
 from django.apps import apps
 from django.core.files.storage import default_storage
 from .serializers import *
@@ -99,12 +101,16 @@ def get_clicks(request):
 
         webevent.session_id = webevent.session_id.astype('int64')
         itemevent.event_id = itemevent.event_id.astype('int64')
+        itemevent.product_id = itemevent.product_id.astype('int64')
         df = session.merge(webevent,how='inner', on = 'session_id')
         df = df.merge(itemevent,how='inner', on = 'event_id')
         
         groupby_object = df.groupby(by=['product_id'])
         result   = groupby_object.size().reset_index(name='counts')
-        print(result)
+        product = pd.DataFrame(Product.objects.using(DB_client).values())
+        product.product_id = product.product_id.astype('int64')
+        result = result.merge(product,on='product_id')
+        # print(result.info())
         return Response({'message': result})
     except Exception as exception:
         return Response({'message': exception})
@@ -1808,6 +1814,7 @@ def add_recommender_strategy(request):
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
     body_json = json.loads(request.body)
+    # username = body_json['username']
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
@@ -1815,7 +1822,7 @@ def add_recommender_strategy(request):
     list_append = []
     for i in body_json['strategies']:
         print(i)
-        x = RecommenderStrategy(strategy = i['strategy'], url = i['url'], xpath = i['xpath'])
+        x = RecommenderStrategy(strategy = i['strategy'],event_type=i['event_type'], url = i['url'], xpath = i['xpath'])
         list_append.append(x)
     RecommenderStrategy.objects.using(DB_client).bulk_create(list_append)
     return Response({"Done"})
@@ -1848,15 +1855,24 @@ def allocate_database(request):
     print("test2 :", request.META.get('REMOTE_ADDR'))
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
-    body_json = json.loads(request.body)
-    username  = body_json['username']
-    service   = body_json['service']
+        ip_add      = request.META.get('REMOTE_ADDR')
+    body_json       = json.loads(request.body)
+    username        = body_json['username']
+    service         = body_json['service']
+    database_name   = body_json['database_name']
     token     = ip_add
     print(username,service)
-    x = ManageAccount(username = username, service = service, token = token, database_name="test2")
-    # TODO: check avalable db
-    x.save()
+    db_conn = connections[database_name]
+    try:
+        c = db_conn.cursor()
+    except OperationalError:
+        connected = False
+    else:
+        connected = True
+    if connected:
+        x = ManageAccount(username = username, service = service, token = token, database_name=database_name)
+        x.save()
+        return Response({"DONE"})
     return Response({"aaaas"})
 
 @api_view(['POST'])
@@ -1973,12 +1989,34 @@ def train_colab_model_api(request):
     train_model_colab(DB_client)
     return Response({"Done"},status=status.HTTP_200_OK)
 
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def train_demographic_model_api(request):
+    print("test 1:",  request.META.get('HTTP_X_FORWARDED_FOR'))
+    print("test2 :", request.META.get('REMOTE_ADDR'))
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    try:
+        if df_manageClient.shape[0] == 0:
+            body_json = json.loads(request.body)
+            DB_client = body_json['database_name']
+        else:
+            DB_client = df_manageClient.iloc[0]['database_name']
+    except:
+        return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
+    train_demographic_model_api(DB_client)
+    return Response({"Done"},status=status.HTTP_200_OK)
+
 from .personalize_recommendation import magic_test
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
 def test(request):
-    # df_customer = Product.objects.all().values()
+    df_customer = pd.DataFrame(Product.objects.using("test1").values())
+    # print()
     # df_customer = pd.DataFrame(Customer.objects.filter(token='x').values())
     # df_customer = Customer.objects.filter(token='fadfadfsdf').values_list('cus_id', flat=True)
     # print(df_customer)
@@ -2005,5 +2043,5 @@ def test(request):
     # product = Product.objects.using("test2").filter(Q(product_id = 200003) if False else Q())
     # print(product)
     # print(predict_model_hot(3,'test2'))
-    magic_test('test2')
+    # magic_test('test2')
     return Response({"aaaas"})
