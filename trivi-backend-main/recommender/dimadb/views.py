@@ -92,7 +92,7 @@ def get_clicks(request):
                                       
         webevent  = pd.DataFrame(WebEvent.objects.using(DB_client).\
                                 filter(event_type = event_type).\
-                                filter(created_at__range = ['2022-02-06', '2023-02-06']).values())
+                                filter(created_at__range = [startdate, enddate]).values())
         
         itemevent = pd.DataFrame(EventItem.objects.using(DB_client).\
                                 filter(Q(product_id = product_id) if product_id!="" else Q()).values())

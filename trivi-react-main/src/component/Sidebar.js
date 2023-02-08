@@ -242,6 +242,7 @@ const Sidebar = () => {
                m: "15px 0 5px 20px",
                
              }}        onClick={handleLogout}
+             
  
            >
              <LogoutIcon sx={{ mr: "10px" }}/>

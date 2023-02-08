@@ -128,16 +128,16 @@ const RouteWithSidebar = ({ component: Component, ...rest }) => {
             <Preloader show={loaded ? false : true} />
             {/* <Sidebar /> */}
 
-            <div className="app d-flex flex-row">
+            <div className="d-flex flex-row">
               <Sidebar isSidebar={isSidebar}/>
-              <div>
+              <main>
                   <Topbar setIsSidebar={setIsSidebar} />
                   <Component {...props} />
                   <Footer
                     toggleSettings={toggleSettings}
                     showSettings={showSettings}
                   />
-              </div>
+              </main>
             </div>
             {/* <main className="content">
               <Navbar />
