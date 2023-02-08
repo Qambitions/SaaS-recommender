@@ -25,6 +25,7 @@ import SynchronizeGA from "./SynchronizeGA";
 
 import ImportData from "./Import";
 import Dashboard from "./Dashboard";
+import ViewClicks from "./ViewClicks";
 
 // components
 import Sidebar from "../component/Sidebar";
@@ -167,6 +168,8 @@ return (
         <RouteWithLoader exact path={Routes.Signup.path} component={Signup} />
         <RouteWithSidebar exact path={Routes.Dashboard.path} component={Dashboard} />
         <RouteWithSidebar exact path={Routes.Import.path} component={ImportData} />
+        <RouteWithSidebar exact path={Routes.ViewClicks.path} component={ViewClicks} />
+
         <Redirect to={Routes.NotFound.path} />
 
       </Switch>

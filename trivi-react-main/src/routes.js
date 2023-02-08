@@ -63,5 +63,6 @@ export const Routes = {
     Toasts: { path: "/components/toasts" },
     WidgetsComponent: { path: "/components/widgets" },
     
-    Import: {path: "/import-data"}
+    Import: {path: "/import-data"}, 
+    ViewClicks: {path: "/view-clicks"}
 };

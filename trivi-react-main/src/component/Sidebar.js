@@ -161,7 +161,7 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Data
+              General data
             </Typography>
 
             <Item
@@ -221,7 +221,21 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             /> */}
+          <Typography
+              variant="h6"
+              color={colors.grey[300]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              Captured data
+            </Typography>
 
+            <Item
+              title="Clicks"
+              to="/view-clicks"
+              icon={<UploadIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
            
 
           {isCollapsed ? 
