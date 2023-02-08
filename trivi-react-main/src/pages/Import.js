@@ -50,7 +50,6 @@ const ImportData = () => {
         if (file) {
             fileReader.onload = function (event) {
                 const csvOutput = event.target.result;
-                console.log(csvOutput);
                 processCSV(csvOutput);
             };
 
