@@ -54,6 +54,8 @@ class ListinitClass_colab(metaclass = SingletonMeta):
         super().__init__() 
         self.init = {"test1"  : InitClass_colab('test1'),
                                 "test2" : InitClass_colab('test2')}
+    def update_init(self,DB_client):
+        self.init[DB_client] = InitClass_colab(DB_client)
 
 class UserModel(tf.keras.Model):
     def __init__(self,DB_client):
@@ -138,6 +140,7 @@ class RetailModel(tfrs.models.Model):
     def __init__(self,DB_client):
         super().__init__()        
         list_init = ListinitClass_colab()
+        list_init.update_init(DB_client)
         tmp = list_init.init[DB_client]
         self.ready = True
         if tmp.ready == False: 

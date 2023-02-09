@@ -1839,7 +1839,11 @@ def check_url_regex(url_pattern, current_page):
     pattern = url_pattern
     pattern = pattern.replace("{number}","[0-9]*")
     pattern = pattern.replace("{any}","[\s\S]*")
-    return re.search(pattern,current_page)
+    pattern = pattern.replace("/","\/")
+    pattern += "END"
+    current_page += "END"
+    regex = re.compile(pattern)
+    return regex.match(current_page)
 
 def check_url(x, current_page):
     check = check_url_regex(x,current_page)
@@ -1951,15 +1955,15 @@ def get_capture(request):
     if need_recommend:
         if statistic == 'colab':
             list_product = predict_product_colab(df_user.iloc[0]['customer_id'],DB_client = DB_client)
-            return Response({'message': list_product},status=status.HTTP_200_OK)
+            return Response({'type':'colab','message': list_product},status=status.HTTP_200_OK)
         if statistic == 'demographic':
             list_product = predict_model_demographic(df_user.iloc[0]['customer_id'],DB_client = DB_client)
-            return Response({'message': list_product},status=status.HTTP_200_OK)
+            return Response({'type':'demographic','message': list_product},status=status.HTTP_200_OK)
         if statistic == 'content':
             ...
         if statistic == 'hot':
             list_product = predict_model_hot(DB_client = DB_client)
-            return Response({'message': list_product},status=status.HTTP_200_OK)
+            return Response({'type':'hot','message': list_product},status=status.HTTP_200_OK)
 
     return Response({"Nothing"})
 

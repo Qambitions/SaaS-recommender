@@ -409,6 +409,7 @@ async function send_capture(token, path,current_page,text) {
     )
     .then((result) => result.json())
     .then((result) => {
+        console.log(result)
         if (result['message'] == "login"){
             setCookie("recommender_cookie", result['token'], 365);
         }
@@ -452,7 +453,6 @@ function debounce_leading(func, timeout = 300){
 
 function capture_event(e) {
   var evt = e 
-  console.log(e.type)
   if (evt) {
     if (evt.isPropagationStopped && evt.isPropagationStopped()) {
       return;
