@@ -409,7 +409,6 @@ async function send_capture(token, path,current_page,text) {
     )
     .then((result) => result.json())
     .then((result) => {
-      console.log(result)
         if (result['message'] == "login"){
             setCookie("recommender_cookie", result['token'], 365);
         }
@@ -425,31 +424,51 @@ async function send_capture(token, path,current_page,text) {
   return []
 }
 
-const debounce = (func, delay) => {
-  let debounceTimer
-  return function() {
-      const context = this
-      const args = arguments
-          clearTimeout(debounceTimer)
-              debounceTimer
-          = setTimeout(() => func.apply(context, args), delay)
-  }
+// let debounce = function(func, wait) {
+//   let timeout;
+//   return function() {
+//       let context = this, args = arguments;
+//       let later = function() {
+//           timeout = null;
+//           func.apply(context, args);
+//       };
+//       clearTimeout(timeout);
+//       timeout = setTimeout(later, wait);
+//   };
+// };
+
+function debounce_leading(func, timeout = 300){
+  let timer;
+  return (...args) => {
+    if (!timer) {
+      func.apply(this, args);
+    }
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = undefined;
+    }, timeout);
+  };
 }
 
 function capture_event(e) {
   var evt = e 
+  console.log(e.type)
   if (evt) {
     if (evt.isPropagationStopped && evt.isPropagationStopped()) {
       return;
     }
     var time = Math.floor(Date.now() / 1000);
     var product_href = window.location.href;
-    var event_path   = evt.composedPath();
     list = []
-    for (var i = 0; i < event_path.length; i++){
-      list.push(event_path[i].localName.toLowerCase())
-      if (event_path[i].localName.toLowerCase() == 'html'){
-        break;
+    if (e.type == 'scroll')
+      list = ['scroll']
+    else {
+      var event_path   = evt.composedPath();
+      for (var i = 0; i < event_path.length; i++){
+        list.push(event_path[i].localName.toLowerCase())
+        if (event_path[i].localName.toLowerCase() == 'html'){
+          break;
+        }
       }
     }
     //todo: check is right path before send (query)

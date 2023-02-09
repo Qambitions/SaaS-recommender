@@ -9,6 +9,7 @@ from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
 from django.db import connections
 from django.db.utils import OperationalError
 from django.apps import apps
+from django.utils import timezone
 from django.core.files.storage import default_storage
 from .serializers import *
 from .models import *
@@ -23,7 +24,7 @@ from google.analytics.data_v1beta.types import RunReportRequest
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 from slugify import slugify
-from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot,predict_model_demographic,train_model_demographic
+from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot,predict_model_demographic,train_model_demographic,train_model_hot
 from .recommend_statistic import login_statistic, session_event_management
 
 import pandas as pd
@@ -38,6 +39,7 @@ import json
 import re
 import string
 import random
+
 
 def id_generator(size=7, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
@@ -1865,7 +1867,7 @@ def allocate_database(request):
     else:
         connected = True
     if connected:
-        x = ManageAccount(username = username, service = service, token = token, database_name=database_name)
+        x = ManageAccount(username = username,created_at=timezone.now(), service = service, token = token, database_name=database_name)
         x.save()
         return Response({"DONE"})
     return Response({"aaaas"})
@@ -1901,8 +1903,8 @@ def get_capture(request):
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
-    
     body_json = json.loads(request.body)
+    
     # query metadata
     df_metadata =  pd.DataFrame(RecommenderStrategy.objects.using(DB_client).all().values())
     if df_metadata.shape[0] == 0:
@@ -1917,7 +1919,7 @@ def get_capture(request):
     # check xpath
     click_path_send = body_json['xpath'].split(' > ')
     click_path_send = list(reversed(click_path_send))
-    # print(click_path_send)
+    
     df_path['xpath'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
     df_path['xpath'] = df_path['xpath'].str[1:]
     df_path['xpath'] = df_path['xpath'].str.split('/')
@@ -1997,6 +1999,25 @@ def train_demographic_model_api(request):
     except:
         return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
     train_model_demographic(DB_client)
+    return Response({"Done"},status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def train_hot_model_api(request):
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    try:
+        if df_manageClient.shape[0] == 0:
+            body_json = json.loads(request.body)
+            DB_client = body_json['database_name']
+        else:
+            DB_client = df_manageClient.iloc[0]['database_name']
+    except:
+        return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
+    train_model_hot(DB_client)
     return Response({"Done"},status=status.HTTP_200_OK)
 
 from .personalize_recommendation import magic_test

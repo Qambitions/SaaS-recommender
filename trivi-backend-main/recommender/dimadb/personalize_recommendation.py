@@ -272,6 +272,11 @@ def train_model_demographic(DB_client):
     models.train_model_demographic(DB_client)
     return True  
 
+def train_model_hot(DB_client):
+    models = ListModel()
+    models.train_model_demographic(DB_client)
+    return True 
+
 def load_model_colab(DB_client):
     models = ListModel()
     predict_model = models.list_model_colab[DB_client]
@@ -365,12 +370,13 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     result   = result.sort_values(by=['counts'],ascending=False)
     return result[:top_n]
 
+if 'runserver' in sys.argv:
+    start_model()
+
 def magic_test(DB_client):
     # train_model_demo(DB_client)
     # predict_model_demo("1000000",DB_client='test2')
     ...
-
-start_model()
 
 if __name__ == "__main__":
 
