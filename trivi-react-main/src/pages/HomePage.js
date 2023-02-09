@@ -26,6 +26,7 @@ import SynchronizeGA from "./SynchronizeGA";
 import ImportData from "./Import";
 import Dashboard from "./Dashboard";
 import ViewClicks from "./ViewClicks";
+import SetStrategy   from "./SetStrategy";
 
 // components
 import Sidebar from "../component/Sidebar";
@@ -169,6 +170,8 @@ return (
         <RouteWithSidebar exact path={Routes.Dashboard.path} component={Dashboard} />
         <RouteWithSidebar exact path={Routes.Import.path} component={ImportData} />
         <RouteWithSidebar exact path={Routes.ViewClicks.path} component={ViewClicks} />
+        <RouteWithSidebar exact path={Routes.SetStrategy.path} component={SetStrategy} />
+
 
         <Redirect to={Routes.NotFound.path} />
 

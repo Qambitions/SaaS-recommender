@@ -8,6 +8,8 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import UploadIcon from '@mui/icons-material/Upload';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import LogoutIcon from '@mui/icons-material/Logout';
+import MouseIcon from '@mui/icons-material/Mouse';
+import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 
 import { Button } from "@mui/material";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
@@ -126,35 +128,21 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-
-            {/* <Typography
+            <Typography
               variant="h6"
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Test
+              Configuration
             </Typography>
+
             <Item
-              title="Manage Team"
-              to="/team"
-              icon={<PeopleOutlinedIcon />}
+              title="Strategy"
+              to="/set-strategy"
+              icon={<DisplaySettingsIcon />}
               selected={selected}
               setSelected={setSelected}
             />
-            <Item
-              title="Contacts Information"
-              to="/contacts"
-              icon={<ContactsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Invoices Balances"
-              to="/invoices"
-              icon={<ReceiptOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
 
             <Typography
               variant="h6"
@@ -232,7 +220,7 @@ const Sidebar = () => {
             <Item
               title="Clicks"
               to="/view-clicks"
-              icon={<UploadIcon />}
+              icon={<MouseIcon />}
               selected={selected}
               setSelected={setSelected}
             />

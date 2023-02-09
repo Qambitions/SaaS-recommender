@@ -64,5 +64,6 @@ export const Routes = {
     WidgetsComponent: { path: "/components/widgets" },
     
     Import: {path: "/import-data"}, 
-    ViewClicks: {path: "/view-clicks"}
+    ViewClicks: {path: "/view-clicks"},
+    SetStrategy: {path: "/set-strategy"}
 };
