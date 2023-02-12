@@ -161,9 +161,9 @@ def add_recommender_strategy(request):
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
     list_append = []
-    for i in body_json['strategies']:
-        x = RecommenderStrategy(strategy = i['strategy'],event_type=i['event_type'], url = i['url'], xpath = i['xpath'])
-        list_append.append(x)
+    i = body_json['strategies']
+    x = RecommenderStrategy(strategy = i['strategy'],event_type=i['event_type'], url = i['url'], xpath = i['xpath'])
+    list_append.append(x)
     RecommenderStrategy.objects.using(DB_client).bulk_create(list_append)
     return Response({"Done"})
 
@@ -230,9 +230,9 @@ def add_scheduler(request):
     DB_client = df_manageClient.iloc[0]['database_name']
     body_json = json.loads(request.body)
     list_append = []
-    for i in body_json['scheduler']:
-        x = Scheduler(strategy = i['strategy'], cycle_time = i['cycle_time'], database_name = DB_client)
-        list_append.append(x)
+    i = body_json['scheduler']
+    x = Scheduler(strategy = i['strategy'], cycle_time = i['cycle_time'], database_name = DB_client)
+    list_append.append(x)
     Scheduler.objects.bulk_create(list_append)
     
     return Response({"Done"})
