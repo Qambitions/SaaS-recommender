@@ -15,10 +15,10 @@ from django.core.files.storage import default_storage
 from pathlib import Path
 from .serializers import *
 from .models import *
-from .utils import check_allow_fields,add_df_model_with_some_fields
+from .utils import check_allow_fields,add_df_model_with_some_fields,add_more_information_for_product_id
 
 from slugify import slugify
-from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot,predict_model_demographic,train_model_demographic,train_model_hot
+from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot,predict_model_demographic,train_model_demographic,train_model_hot,predict_model_contentbase,train_model_contentbase
 from .recommend_statistic import login_statistic, session_event_management
 
 import pandas as pd
@@ -271,6 +271,7 @@ def get_capture(request):
     df_path['check_path'] = df_path['xpath'].apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
+        return Response({"message":"popup"})
         return Response({"2 không có chiến lược ở đường click"})
     event_type = df_click['event_type'].iat[0]
     statistic = df_click['strategy'].iat[0]
@@ -296,15 +297,23 @@ def get_capture(request):
     if need_recommend:
         if statistic == 'colab':
             list_product = predict_product_colab(df_user.iloc[0]['customer_id'],DB_client = DB_client)
-            return Response({'type':'colab','message': list_product},status=status.HTTP_200_OK)
+            info = add_more_information_for_product_id(list_product,DB_client)
+            return Response({'type':'colab','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
         if statistic == 'demographic':
             list_product = predict_model_demographic(df_user.iloc[0]['customer_id'],DB_client = DB_client)
-            return Response({'type':'demographic','message': list_product},status=status.HTTP_200_OK)
+            info = add_more_information_for_product_id(list_product,DB_client)
+            return Response({'type':'demographic','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
         if statistic == 'content':
-            ...
+            product_filter = Product.objects.using(DB_client).filter(url=body_json['current_page'])
+            if product_filter:
+                product_id = product_filter.all()[0].product_id
+                list_product = predict_model_contentbase(product_id,DB_client = DB_client)
+                info = add_more_information_for_product_id(list_product,DB_client)
+                return Response({'type':'contentbase','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
         if statistic == 'hot':
             list_product = predict_model_hot(DB_client = DB_client)
-            return Response({'type':'hot','message': list_product},status=status.HTTP_200_OK)
+            info = add_more_information_for_product_id(list_product,DB_client)
+            return Response({'type':'hot','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
 
     return Response({"Nothing"})
 
@@ -398,11 +407,12 @@ def test(request):
     # product = Product.objects.using("test2").filter(Q(product_id = 200003) if False else Q())
     # print(product)
     # print(predict_model_hot(3,'test2'))
-    # magic_test('test2')
-    fields = [field.name for field in Session._meta.get_fields()]
-    print(fields)
+    # magic_test('test1')
+    # fields = [field.name for field in Session._meta.get_fields()]
+    # print(fields)
     # print(fields)
     # print(getattr(Session, fields[0]))
     # field_type = Session._meta.get_field(fields[0]).get_internal_type()
     # print(field_type)
-    return Response({"aaaas"})
+    info = add_more_information_for_product_id(['200016','200018'],'test1')
+    return Response({"mess":info})
