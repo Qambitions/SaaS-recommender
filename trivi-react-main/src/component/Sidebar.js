@@ -137,8 +137,8 @@ const Sidebar = () => {
             </Typography>
 
             <Item
-              title="Strategy"
-              to="/set-strategy"
+              title="Configuration"
+              to="/config"
               icon={<DisplaySettingsIcon />}
               selected={selected}
               setSelected={setSelected}

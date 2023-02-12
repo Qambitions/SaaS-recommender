@@ -65,5 +65,5 @@ export const Routes = {
     
     Import: {path: "/import-data"}, 
     ViewClicks: {path: "/view-clicks"},
-    SetStrategy: {path: "/set-strategy"}
+    Config: {path: "/config"}
 };
