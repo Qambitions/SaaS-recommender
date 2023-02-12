@@ -37,7 +37,7 @@ def prepare_data(DB_client):
     product_popular_scores_buckets = np.linspace( product_min_popular_scores, product_max_popular_scores, num=10,)
     # df_product.rename(columns={"category": "product_category",
     #                             "current_price":'prod_price'}, inplace = True)
-    products = tf.data.Dataset.from_tensor_slices(to_dictionary(df_product[['product_name','category','price']]))
+    products = tf.data.Dataset.from_tensor_slices(to_dictionary(df_product[['product_id','product_name','category','price']]))
 
     df_customer_session = pd.DataFrame(Session.objects.using(DB_client).all().values())
     if df_customer_session.shape[0] == 0:

@@ -5,6 +5,7 @@ import os
 import pydash
 import urllib3
 import pandas as pd
+from .models import *
 
 # Function return an object in json file
 def get_json_info(file_path, obj_key):
@@ -83,3 +84,14 @@ def add_df_model_with_some_fields(df, model, right_fields=[]):
             setattr(instance,j,row[j])
         objects_list.append(instance)
     model.objects.bulk_create(objects_list)
+
+def add_more_information_for_product_id(list_product, DB_client):    
+    df_product = pd.DataFrame(Product.objects.using(DB_client).values())
+    res = []
+    for i in list_product:
+        product = df_product[df_product['product_id'] == i]
+        res.append({"id":product['product_id'].iat[0],
+                    "name":product['product_name'].iat[0],
+                    "url":product['url'].iat[0],
+                    "image":product['image'].iat[0]})
+    return res

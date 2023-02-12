@@ -21,6 +21,8 @@ import joblib
 from dimadb.tmp import prepare_data
 from django.db.models import Q, Count, F, Sum, Max
 from datetime import datetime, date
+import gensim
+from gensim import corpora
 
 def id_generator(size=7, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
@@ -220,20 +222,40 @@ class DemographicModel():
         self.data  = df[['city_label','gender_label','age']]
         self.model = KMeans(n_clusters=5)
 
+class ContentBaseModel():
+    def __init__(self,DB_client):
+        super().__init__()
+        df = pd.DataFrame(Product.objects.using(DB_client).values())
+        self.ready = True
+        if df.shape[0] == 0:
+            self.ready = False
+            return
+        df = df.sort_values(by=['product_id'])
+        documents = df['product_name'].tolist()
+        documents = [document.lower().split() for document in documents]
+        self.dictionary = corpora.Dictionary(documents)
+        bow_corpus = [self.dictionary.doc2bow(document) for document in documents]
+        self.tfidf = gensim.models.TfidfModel(bow_corpus)
+        document_vectors = [self.tfidf[bow] for bow in bow_corpus]
+        self.index = gensim.similarities.MatrixSimilarity(document_vectors)
+
 class ListModel(metaclass = SingletonMeta):
     def __init__(self,num=2):
         super().__init__()
-        self.number_model = 2
+        self.number_model = 4
         self.list_model_colab = {"test1"  : RetailModel('test1'),
                                 "test2" : RetailModel('test2')}
 
-        self.list_model_hot   = {"test1"  : HotModel('test1'),
-                                "test2" : HotModel('test2')}
+        # self.list_model_hot   = {"test1"  : HotModel('test1'),
+        #                         "test2" : HotModel('test2')}
 
-        self.list_model_demographic = {"test1"  : DemographicModel('test1'),
-                                "test2" : DemographicModel('test2')}
+        # self.list_model_demographic = {"test1"  : DemographicModel('test1'),
+        #                         "test2" : DemographicModel('test2')}
+
+        # self.list_model_contentbase = {"test1"  : ContentBaseModel('test1'),
+        #                         "test2" : ContentBaseModel('test2')}
     
-    def train_model_colab(self, DB_client):
+    def func_train_model_colab(self, DB_client):
         model = RetailModel(DB_client)
         model.compile(optimizer=tf.keras.optimizers.Adagrad(0.1))
         train = model.ratings.take(100000)
@@ -245,10 +267,13 @@ class ListModel(metaclass = SingletonMeta):
         x = RecommenderModel(created_at = datetime.now(), model_type = "colab",model_path='./model/'+name)
         x.save(using=DB_client)
     
-    def train_model_hot(self, DB_client):
-        self.list_model_colab[DB_client] = HotModel(DB_client)
+    def func_train_model_hot(self, DB_client):
+        self.list_model_hot[DB_client] = HotModel(DB_client)
 
-    def train_model_demographic(self, DB_client):
+    def func_train_model_content(self, DB_client):
+        self.list_model_contentbase[DB_client] = ContentBaseModel(DB_client)
+
+    def func_train_model_demographic(self, DB_client):
         model_class = DemographicModel(DB_client)
         model = model_class.model
         model.fit(model_class.data)
@@ -267,17 +292,22 @@ def to_dictionary(df):
 
 def train_model_colab(DB_client):
     models = ListModel()
-    models.train_model_colab(DB_client)
+    models.func_train_model_colab(DB_client)
     return True  
 
 def train_model_demographic(DB_client):
     models = ListModel()
-    models.train_model_demographic(DB_client)
+    models.func_train_model_demographic(DB_client)
     return True  
 
 def train_model_hot(DB_client):
     models = ListModel()
-    models.train_model_demographic(DB_client)
+    models.func_train_model_hot(DB_client)
+    return True 
+
+def train_model_contentbase(DB_client):
+    models = ListModel()
+    models.func_train_model_content(DB_client)
     return True 
 
 def load_model_colab(DB_client):
@@ -324,7 +354,7 @@ def predict_product_colab(user, top_n=3,DB_client = ""):
     index = tfrs.layers.factorized_top_k.BruteForce(predict_model.user_model)
     # recommends movies out of the entire movies dataset.
     index.index_from_dataset(
-    tf.data.Dataset.zip((products.map(lambda x: x["product_name"]).batch(100), products.batch(100).map(predict_model.product_model)))
+    tf.data.Dataset.zip((products.map(lambda x: x["product_id"]).batch(100), products.batch(100).map(predict_model.product_model)))
     )
     # index.index(products.batch(128).map(model.product_model), products.batch(128))
 
@@ -346,6 +376,25 @@ def predict_model_hot(top_n=3, DB_client = ""):
         return "chưa có model"
     result = models.list_model_hot[DB_client].res
     return result[:top_n]
+
+def predict_model_contentbase(product_id, top_n=3, DB_client = ""):
+    models = ListModel()
+    
+    if models.list_model_contentbase[DB_client].ready == False:
+        return "chưa có model"
+    df = pd.DataFrame(Product.objects.using(DB_client).values())
+    df = df.sort_values(by=['product_id'])
+    dictionary = models.list_model_contentbase[DB_client].dictionary
+    tfidf      = models.list_model_contentbase[DB_client].tfidf
+    query = dictionary.doc2bow(df[df['product_id'] == product_id]['product_name'].iat[0].lower().split())
+    query = tfidf[query]
+    similarities = models.list_model_contentbase[DB_client].index[query]
+    similar_item_index = similarities.argsort()[::-1][:(top_n+1)]
+    
+    result = []
+    for i in similar_item_index:
+        result.append(df['product_id'].iat[i])
+    return result
 
 def predict_model_demographic(user, top_n=3, DB_client = ""):
     models = ListModel()
@@ -375,10 +424,13 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
 
 if 'runserver' in sys.argv:
     start_model()
+    ...
 
 def magic_test(DB_client):
     # train_model_demo(DB_client)
     # predict_model_demo("1000000",DB_client='test2')
+    # train_model_contentbase("test1")
+    print(predict_product_colab('1000000',DB_client='test1'))
     ...
 
 if __name__ == "__main__":

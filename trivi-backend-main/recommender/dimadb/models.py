@@ -68,6 +68,7 @@ class Product(models.Model):
     revenue = models.IntegerField(null=True, blank=True)
     url = models.CharField(max_length=150, null=False, blank=True)
     description = models.TextField(null=True, blank=True)
+    image = models.TextField(null=True, blank=True)
    
 # Session
 class Session(models.Model):
