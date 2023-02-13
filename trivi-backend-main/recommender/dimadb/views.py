@@ -74,7 +74,7 @@ def get_report(request):
         session   = Session.objects.using(DB_client).\
                                 filter(Q(customer_id = customer_id) if customer_id!="" else Q()).values()
         webevent  = WebEvent.objects.using(DB_client).\
-                                filter(event_type = event_type).\
+                                filter(Q(event_type = event_type) if event_type!="" else Q()).\
                                 filter(created_at__range = [startdate, enddate]).values()
         itemevent = EventItem.objects.using(DB_client).\
                                 filter(Q(product_id = product_id) if product_id!="" else Q()).values()
