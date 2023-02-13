@@ -67,18 +67,22 @@ def get_report(request):
             return Response({'message': "thiếu dữ liệu"})
         # print(startdate,enddate)
         df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
-        DB_client = df_manageClient.iloc[0]['database_name']
         if df_manageClient.shape[0] == 0:
             return Response({"Chưa có đăng ký"})
-        session   = pd.DataFrame(Session.objects.using(DB_client).\
-                                filter(Q(customer_id = customer_id) if customer_id!="" else Q()).values())
-                                      
-        webevent  = pd.DataFrame(WebEvent.objects.using(DB_client).\
-                                filter(event_type = event_type).\
-                                filter(created_at__range = [startdate, enddate]).values())
+        DB_client = df_manageClient.iloc[0]['database_name']
         
-        itemevent = pd.DataFrame(EventItem.objects.using(DB_client).\
-                                filter(Q(product_id = product_id) if product_id!="" else Q()).values())
+        session   = Session.objects.using(DB_client).\
+                                filter(Q(customer_id = customer_id) if customer_id!="" else Q()).values()
+        webevent  = WebEvent.objects.using(DB_client).\
+                                filter(event_type = event_type).\
+                                filter(created_at__range = [startdate, enddate]).values()
+        itemevent = EventItem.objects.using(DB_client).\
+                                filter(Q(product_id = product_id) if product_id!="" else Q()).values()
+        if (not  session) or (not webevent) or (not itemevent):
+            return Response({"Chưa có dữ liệu"})
+        session   = pd.DataFrame(session)      
+        webevent  = pd.DataFrame(webevent)
+        itemevent = pd.DataFrame(itemevent)
 
         webevent.session_id = webevent.session_id.astype('int64')
         itemevent.event_id = itemevent.event_id.astype('int64')
@@ -91,7 +95,8 @@ def get_report(request):
         product = pd.DataFrame(Product.objects.using(DB_client).values())
         product.product_id = product.product_id.astype('int64')
         result = result.merge(product,on='product_id')
-        # print(result.info())
+        if (request.GET['sum']) == "TRUE":
+            return Response({'message': result['counts'].sum()})
         return Response({'message': result})
     except Exception as exception:
         return Response({'message': exception})
