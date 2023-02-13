@@ -20,6 +20,7 @@ from .utils import check_allow_fields,add_df_model_with_some_fields,add_more_inf
 from slugify import slugify
 from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot,predict_model_demographic,train_model_demographic,train_model_hot,predict_model_contentbase,train_model_contentbase
 from .recommend_statistic import login_statistic, session_event_management
+from recommender import settings
 
 import pandas as pd
 import random
@@ -185,21 +186,24 @@ def allocate_database(request):
     body_json       = json.loads(request.body)
     username        = body_json['username']
     service         = body_json['service']
-    database_name   = body_json['database_name']
+    # database_name   = body_json['database_name']
     token           = body_json['ip_address']
-
-    db_conn = connections[database_name]
-    try:
-        c = db_conn.cursor()
-    except OperationalError:
-        connected = False
-    else:
-        connected = True
-    if connected:
-        x = ManageAccount(username = username,created_at=timezone.now(), service = service, token = token, database_name=database_name)
-        x.save()
-        return Response({"DONE"})
-    return Response({"aaaas"})
+    list_used = list(ManageAccount.objects.values_list('database_name',flat=True))
+    
+    for i in settings.DATABASES:
+        if i in list_used: continue
+        db_conn = connections[i]
+        try:
+            c = db_conn.cursor()
+        except OperationalError:
+            connected = False
+        else:
+            connected = True
+        if connected:
+            x = ManageAccount(username = username,created_at=timezone.now(), service = service, token = token, database_name=database_name)
+            x.save()
+            return Response({"DONE"})
+    return Response({"Đã hết database để cung cấp"})
 
 @api_view(['POST'])
 @authentication_classes([])
@@ -416,5 +420,11 @@ def test(request):
     # print(getattr(Session, fields[0]))
     # field_type = Session._meta.get_field(fields[0]).get_internal_type()
     # print(field_type)
-    info = add_more_information_for_product_id(['200016','200018'],'test1')
-    return Response({"mess":info})
+    # info = add_more_information_for_product_id(['200016','200018'],'test1')
+    # print(settings.DATABASES)
+    # for i in settings.DATABASES:
+    #     print(i)
+    list_used = list(ManageAccount.objects.values_list('database_name',flat=True))
+    print(list_used)
+    print('test1' in list_used)
+    return Response({"mess"})
