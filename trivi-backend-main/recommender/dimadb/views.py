@@ -95,11 +95,37 @@ def get_report(request):
         product = pd.DataFrame(Product.objects.using(DB_client).values())
         product.product_id = product.product_id.astype('int64')
         result = result.merge(product,on='product_id')
-        if (request.GET['sum']) == "TRUE":
-            return Response({'message': result['counts'].sum()})
         return Response({'message': result})
     except Exception as exception:
         return Response({'message': exception})
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def get_key_metrics(request):
+    time_range        = request.GET['time']
+    username          = request.GET['username']
+    enddate = datetime.today()
+    if time_range == 'week':
+        startdate = enddate - timedelta(days=6)
+    elif time_range == 'month':
+        startdate = enddate - timedelta(days=30)
+    elif time_range == 'year':
+        startdate = enddate - timedelta(days=365)
+    else:
+        return Response({'message': "thiếu dữ liệu"})
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
+    if df_manageClient.shape[0] == 0:
+        return Response({"Chưa có đăng ký"})
+    DB_client = df_manageClient.iloc[0]['database_name']
+    itemevent = EventItem.objects.using(DB_client).values()
+    if (not itemevent):
+            return Response({"Chưa có dữ liệu"})
+
+    itemevent = pd.DataFrame(itemevent)
+    groupby_object = itemevent.groupby(by=['event_type'])
+    result   = groupby_object.size().reset_index(name='counts')
+    return Response({'message': result})
 
 @api_view(['POST'])
 @authentication_classes([])

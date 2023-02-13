@@ -14,4 +14,5 @@ urlpatterns = [
     path('train-hot-model/', train_hot_model_api),
     path('train-content-model/', train_hot_model_api),
     path('import-csv/', import_csv),
+    path('get-key-metrics/', get_key_metrics),
 ]
