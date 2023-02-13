@@ -24,10 +24,7 @@ from .recommend_statistic import login_statistic, session_event_management
 import pandas as pd
 import random
 import json
-import uuid
 import os
-import pydash
-import urllib3
 import dotenv
 import json
 import re
@@ -42,28 +39,14 @@ def id_generator(size=7, chars=string.ascii_uppercase + string.digits):
 # Read configure file
 base_dir = Path(__file__).resolve().parent.parent
 module_dir = os.path.dirname(__file__)
-mapping_template_file_path = os.path.join(module_dir, 'configuration/mapping_template.json')
-schema_table_file_path = os.path.join(module_dir, 'configuration/schema_table.json')
-schema_detail_file_path = os.path.join(module_dir, 'configuration/schema_detail.json')
-ga4_json = os.path.join(module_dir, 'configuration/ga4.json')
-ua_json = os.path.join(module_dir, 'configuration/ua.json')
 
 # Initialize environment variables
 dotenv.load_dotenv(os.path.join(base_dir, '.env'))
 
-# Global vaos.environrial
-API_KEY = os.environ['API_KEY']
-IP_DOMAIN = os.environ['IP_DOMAIN']
-scope = 'https://www.googleapis.com/auth/analytics.readonly'
-dimensions = ['date', 'eventName', 'pageLocation', 'browser', 'deviceCategory', 'operatingSystem', 'country']
-metrics = ['eventCount', 'sessions']
-ua_dimensions = ['ga:date', 'ga:eventCategory', 'ga:pagePath', 'ga:browser', 'ga:deviceCategory', 'ga:operatingSystem', 'ga:country']
-ua_metrics = ['ga:totalEvents', 'ga:sessions']
-
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
-def get_clicks(request):
+def get_report(request):
     try:
         # body_json       = json.loads(request.body)
         time_range        = request.GET['time']
@@ -120,6 +103,7 @@ def import_csv(request):
         if request.method == 'POST':
             file = request.FILES['file']
             table = request.POST['table']
+            username = request.POST['username']
 
             file_data = file.read().decode("utf-8-sig",errors="ignore").split("\n")
             reader = csv.reader(file_data)
@@ -127,18 +111,24 @@ def import_csv(request):
             df.columns = df.iloc[0]
             df = df[1:]
             df.dropna(axis = 0, how = 'all', inplace = True)
+
+            df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
+            DB_client = df_manageClient.iloc[0]['database_name']
+            if df_manageClient.shape[0] == 0:
+                return Response({"Chưa có đăng ký"})
+
             if table.upper() == 'CUSTOMER':
                 right_fields,df = check_allow_fields(df,Customer)
                 if right_fields==False: return JsonResponse({'message':"import Fail"})
-                add_df_model_with_some_fields(df,Customer,right_fields)
+                add_df_model_with_some_fields(df,Customer,DB_client,right_fields)
             elif table.upper() == 'CUSTOMERPROFILE':
                 right_fields,df  = check_allow_fields(df,CustomerProfile)
                 if right_fields==False: return JsonResponse({'message':"import Fail"})
-                add_df_model_with_some_fields(df,CustomerProfile,right_fields)
+                add_df_model_with_some_fields(df,CustomerProfile,DB_client,right_fields)
             elif table.upper() == 'PRODUCT':
                 right_fields,df  = check_allow_fields(df,Product)
                 if right_fields==False: return JsonResponse({'message':"import Fail"})
-                add_df_model_with_some_fields(df,Product,right_fields)
+                add_df_model_with_some_fields(df,Product,DB_client,right_fields)
             else:
                 return JsonResponse({'message':"thiếu trường thông tin"})
             return JsonResponse({'message':"DONE"})
@@ -151,12 +141,9 @@ def import_csv(request):
 @authentication_classes([])
 @permission_classes([])
 def add_recommender_strategy(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
     body_json = json.loads(request.body)
-    # username = body_json['username']
-    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    username = body_json['username']
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
@@ -195,14 +182,11 @@ def check_url(x, current_page):
 @authentication_classes([])
 @permission_classes([])
 def allocate_database(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add      = request.META.get('REMOTE_ADDR')
     body_json       = json.loads(request.body)
     username        = body_json['username']
     service         = body_json['service']
     database_name   = body_json['database_name']
-    token     = ip_add
+    token           = body_json['ip_address']
 
     db_conn = connections[database_name]
     try:
@@ -221,10 +205,9 @@ def allocate_database(request):
 @authentication_classes([])
 @permission_classes([])
 def add_scheduler(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
-    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    body_json = json.loads(request.body)
+    username = body_json['username']
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
@@ -372,6 +355,25 @@ def train_hot_model_api(request):
     except:
         return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
     train_model_hot(DB_client)
+    return Response({"Done"},status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def train_contentbase_model_api(request):
+    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
+    if ip_add is None:
+        ip_add = request.META.get('REMOTE_ADDR')
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    try:
+        if df_manageClient.shape[0] == 0:
+            body_json = json.loads(request.body)
+            DB_client = body_json['database_name']
+        else:
+            DB_client = df_manageClient.iloc[0]['database_name']
+    except:
+        return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
+    train_model_contentbase(DB_client)
     return Response({"Done"},status=status.HTTP_200_OK)
 
 from .personalize_recommendation import magic_test

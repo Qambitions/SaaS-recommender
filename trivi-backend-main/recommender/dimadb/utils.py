@@ -75,7 +75,7 @@ def check_allow_fields(df, model):
                 df[field] = pd.to_datetime(df[field])
     return fields_list,df
 
-def add_df_model_with_some_fields(df, model, right_fields=[]):
+def add_df_model_with_some_fields(df, model,DB_client, right_fields=[]):
     objects_list = []
     for i, row in df.iterrows():
         instance = model()
@@ -83,7 +83,7 @@ def add_df_model_with_some_fields(df, model, right_fields=[]):
             # instance[j] = row[j]
             setattr(instance,j,row[j])
         objects_list.append(instance)
-    model.objects.bulk_create(objects_list)
+    model.objects.using(DB_client).bulk_create(objects_list)
 
 def add_more_information_for_product_id(list_product, DB_client):    
     df_product = pd.DataFrame(Product.objects.using(DB_client).values())
