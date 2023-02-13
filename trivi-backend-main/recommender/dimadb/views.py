@@ -190,9 +190,9 @@ def allocate_database(request):
     token           = body_json['ip_address']
     list_used = list(ManageAccount.objects.values_list('database_name',flat=True))
     
-    for i in settings.DATABASES:
-        if i in list_used: continue
-        db_conn = connections[i]
+    for database_name in settings.DATABASES:
+        if database_name in list_used: continue
+        db_conn = connections[database_name]
         try:
             c = db_conn.cursor()
         except OperationalError:
