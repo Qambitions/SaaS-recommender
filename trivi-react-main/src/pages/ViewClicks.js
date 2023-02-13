@@ -55,7 +55,12 @@ const ViewClicks = () => {
 
   
       useEffect(() => {
-        const url = domainPath + "dimadb/get-clicks/?time="+query.time+"&product="+query.product+"&customer_id="+query.customer_id+"&username="+query.username+"&event_type="+query.event_type;
+        const url = domainPath + "dimadb/get-clicks/?time="+query.time+
+                              "&product="+query.product+
+                              "&customer_id="+query.customer_id+
+                              "&username="+query.username+
+                              "&event_type="+query.event_type+
+                              "&sum=";
         const fetchClicks = async() => {
             const result = await fetch(url, {
                 method: "GET",
