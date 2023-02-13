@@ -20,7 +20,6 @@ const ViewClicks = () => {
     customer_id: "",
     time: "year"
   });
-  const [col, setCol] = useState([]);
   const columns = [
     "product_id", "product_name", "counts", "price", "revenue"
   ].map(c => ({
@@ -49,47 +48,14 @@ const ViewClicks = () => {
 
             }
             return result;
-    // var result = clicks.map(item=> {
-    //   return ( {product_id: item.product_id ,
-    //     product_name: item.product_name})
-    // }
-     
-    //   );
-    // setClicks(result);
-    // console.log("Clicks 2", clicks);
 
-    // console.log("Test: ", result);
 }
 
-    // const fetchClicks = () => {
-    //   const url = domainPath + "dimadb/get-clicks/?time="+query.time+"&product="+query.product+"&customer_id="+query.customer_id+"&username="+query.username+"&event_type="+query.event_type;
-    //   fetch(url, {
-    //       method: "GET",
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //       },
-    //       // params: JSON.stringify(query),
-    //     }).then((res) => res.json())
-    //     .then((data) => {
-    //       return data;
-    //     }).catch((err) => alert(err));
-    //   }; 
-
-    // useEffect(() => {
-    //   (async () => {
-    //     const data = await fetchClicks();
-    //     setClicks(data);
-    //   })();
-    
-    //   return () => {
-    //     console.log("Clicks: ", clicks);
-    //   };
-    // }, []);
+   
 
   
       useEffect(() => {
         const url = domainPath + "dimadb/get-clicks/?time="+query.time+"&product="+query.product+"&customer_id="+query.customer_id+"&username="+query.username+"&event_type="+query.event_type;
-        console.log("url: ", url);
         const fetchClicks = async() => {
             const result = await fetch(url, {
                 method: "GET",
@@ -103,14 +69,6 @@ const ViewClicks = () => {
                 return data;
               }).catch((err) => alert(err));
 
-              // console.log("Result:  ", changeFormat(result.message));
-              // var columnsIn = changeFormat(result.message)[0]; 
-              //   for(var key in columnsIn){
-              //     setCol(current => [...current, key]);
-              //     console.log("Collll", key); // here is your column name you are looking for
-              //   } 
-
-              
         }
 
 

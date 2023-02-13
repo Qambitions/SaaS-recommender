@@ -58,7 +58,6 @@ const Config = () => {
           newState[name] = value;
           return newState;
         });
-      console.log("check", {"scheduler":[scheduler]})
 
   };
 

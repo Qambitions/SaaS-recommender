@@ -1,61 +1,98 @@
 import React, { useState } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, Select, MenuItem  } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../component/Header";
 import { useTheme } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../theme";
+import {  Form, Card, InputGroup } from '@themesberg/react-bootstrap';
+import { domainPath } from "../constants/utils";
+
 
 const ImportData = () => {
+  const username = localStorage.getItem('userName') || 'Unknown';
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [file, setFile] = useState();
   const [columns, setColumns] = useState([]);
-    const fileReader = new FileReader();
+  const [csvArray, setCsvArray] = useState([]);
 
-    const handleOnChange = (e) => {
-        setFile(e.target.files[0]);
-    };
+  const [table, setTable] = useState("");
 
-    const [csvArray, setCsvArray] = useState([]);
+  const fileReader = new FileReader();
 
-    const processCSV = (str, delim=',') => {
+  const handleFileChange = (e) => {
+      setFile(e.target.files[0]);
+  };
+  const handleTabChange = (e) => {
+    setTable(e.target.value);
+};
+  const handleGetRowId = (e) => {
+    return table=="PRODUCT" ? e.product_id : e.customer_id;
+  }
+
+
+  const processCSV = (str, delim=',') => {
+    
+      const headers = str.slice(0,str.indexOf('\n')).split(delim);
+      const rows = str.slice(str.indexOf('\n')+1).split('\n');
+
+      const newArray = rows.map( row => {
+          const values = row.split(delim);
+          const eachObject = headers.reduce((obj, header, i) => {
+              obj[header] = values[i];
+              return obj;
+          }, {})
+          return eachObject;
+      })
+
       
-        const headers = str.slice(0,str.indexOf('\n')).split(delim);
-        const rows = str.slice(str.indexOf('\n')+1).split('\n');
+      setCsvArray(newArray);
+      const columns = headers.map(c => ({
+        field: c,
+        headerName: c,
+        flex: 1,
+      }));
 
-        const newArray = rows.map( row => {
-            const values = row.split(delim);
-            const eachObject = headers.reduce((obj, header, i) => {
-                obj[header] = values[i];
-                return obj;
-            }, {})
-            return eachObject;
+      setColumns(columns);
+
+
+  }
+
+  const handleFormSubmit = (e) => {
+      e.preventDefault();
+
+      if (file) {
+
+        // const formData = new FormData();
+        // formData.append('file', file);
+        // formData.append('table', table);
+        // formData.append('username', username);
+    
+        fetch(domainPath + "dimadb/import-csv/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({"file": file, "table": table, "username": username }),
         })
+          .then((res) => res.json())
+          .then((json) => console.log(json))
+          .catch((err) => alert(err));
 
-        
-        setCsvArray(newArray);
-        const columns = headers.map(c => ({
-          field: c,
-          headerName: c,
-          flex: 1,
-        }));
-        setColumns(columns);
-    }
+        // Show on datagrid
+          fileReader.onload = function (event) {
+              const csvOutput = event.target.result;
+              processCSV(csvOutput);
+          };
 
-    const handleFormSubmit = (e) => {
-        e.preventDefault();
+          fileReader.readAsText(file);
+         
+          
+      }
 
-        if (file) {
-            fileReader.onload = function (event) {
-                const csvOutput = event.target.result;
-                processCSV(csvOutput);
-            };
-
-            fileReader.readAsText(file);
-        }
-    };
+  };
 
     
 
@@ -72,14 +109,37 @@ const ImportData = () => {
                 "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
               }}
             >
+              <Form.Group id="file" className="mb-4" gridColumn="span 6">
+            <Form.Label>Choose file to import</Form.Label>
               <input
                     type={"file"}
                     id={"csvFileInput"}
                     accept={".csv"}
-                    onChange={handleOnChange}
+                    onChange={handleFileChange}
                 />
+              </Form.Group>
+              <Form.Group id="table" className="mb-4">
+            <Form.Label>Select table</Form.Label>
+            <InputGroup>
+                <Select
+                  name="table"
+                  value={table}
+                  label="Table"
+                  onChange={handleTabChange}
+                  required
+                  type="text"
+                  fullWidth
+                >
+                  <MenuItem value={"CUSTOMERPROFILE"}>Customer Profile</MenuItem>
+                  <MenuItem value={"CUSTOMER"}>Customer</MenuItem>
+                  <MenuItem value={"PRODUCT"}>Product</MenuItem>
+
+                </Select>
+            </InputGroup>
+            </Form.Group>
               
             </Box>
+            
             <Box display="flex" justifyContent="end" mt="20px">
               <Button color="secondary" variant="contained"
               onClick={(e) => {
@@ -126,7 +186,8 @@ const ImportData = () => {
           rows={csvArray}
           columns={columns}
           components={{ Toolbar: GridToolbar }}
-        />
+          getRowId={handleGetRowId}        
+          />
     </Box>
     </>
   );
