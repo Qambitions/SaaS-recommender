@@ -10,9 +10,7 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import LogoutIcon from '@mui/icons-material/Logout';
 import MouseIcon from '@mui/icons-material/Mouse';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
-
 import { Button } from "@mui/material";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -100,9 +98,10 @@ const Sidebar = () => {
                   alt="profile-user"
                   width="100px"
                   height="100px"
-                  src={`../../assets/user.png`}
+                  src={`../assets/img/profile.jpg`}
                   style={{ cursor: "pointer", borderRadius: "50%" }}
                 />
+
               </Box>
               <Box textAlign="center">
                 <Typography

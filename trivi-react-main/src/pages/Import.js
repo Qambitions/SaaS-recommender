@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, TextField, Select, MenuItem  } from "@mui/material";
+import { Box, Button, TextField, Select, MenuItem, FormHelperText  } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../component/Header";
 import { useTheme } from "@mui/material";
@@ -19,6 +19,8 @@ const ImportData = () => {
   const [csvArray, setCsvArray] = useState([]);
 
   const [table, setTable] = useState("");
+  const [error, setError] = useState(false);
+  const [fileMissing, setFileMissing] = useState(false);
 
   const fileReader = new FileReader();
 
@@ -63,12 +65,12 @@ const ImportData = () => {
   const handleFormSubmit = (e) => {
       e.preventDefault();
 
+      if (table=="")
+      {
+        setError(true)
+        return;
+      }
       if (file) {
-
-        // const formData = new FormData();
-        // formData.append('file', file);
-        // formData.append('table', table);
-        // formData.append('username', username);
         const formData = new FormData();
         formData.append("file", file);
         formData.append("table", table);
@@ -78,7 +80,7 @@ const ImportData = () => {
           body: formData,
         })
           .then((res) => res.json())
-          .then((json) => console.log(json))
+          .then((json) => alert("Import successfully!!"))
           .catch((err) => alert(err));
 
         // Show on datagrid
@@ -87,9 +89,11 @@ const ImportData = () => {
               processCSV(csvOutput);
           };
 
-          fileReader.readAsText(file);
-         
-          
+          fileReader.readAsText(file);     
+      }
+      else {
+        setFileMissing(true);
+        return;
       }
 
   };
@@ -117,6 +121,8 @@ const ImportData = () => {
                     accept={".csv"}
                     onChange={handleFileChange}
                 />
+                {fileMissing && <FormHelperText>Please select a file!!</FormHelperText>}
+
               </Form.Group>
               <Form.Group id="table" className="mb-4">
             <Form.Label>Select table</Form.Label>
@@ -135,6 +141,7 @@ const ImportData = () => {
                   <MenuItem value={"PRODUCT"}>Product</MenuItem>
 
                 </Select>
+                {error && <FormHelperText>Please select a table you want to import!!</FormHelperText>}
             </InputGroup>
             </Form.Group>
               

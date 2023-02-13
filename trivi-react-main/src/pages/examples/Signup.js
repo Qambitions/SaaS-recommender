@@ -10,7 +10,7 @@ import { domainPath } from "../../constants/utils";
 import { Routes } from "../../routes";
 import BgImage from "../../assets/img/illustrations/signin.svg";
 import { AppContext } from "../AppContext";
-
+import DnsIcon from '@mui/icons-material/Dns';
 
 
 export default class Signup extends Component {
@@ -21,7 +21,8 @@ export default class Signup extends Component {
     this.state = {
       username: "",
       password: "",
-      email: ""
+      email: "",
+      ip_address: ""
     };
   }
 
@@ -37,8 +38,6 @@ export default class Signup extends Component {
 
   handleSignup = (e, data) => {
     e.preventDefault();
-    console.log(JSON.stringify(data));
-    console.log(domainPath + "core/register/");
     fetch(domainPath + "core/register/", {
       method: "POST",
       headers: {
@@ -46,7 +45,33 @@ export default class Signup extends Component {
       },
       body: JSON.stringify(data),
     })
-      .then((res) => { alert(res.statusText)})
+      .then((res) => { 
+        if (res.status == 200) {
+          const allocate = {
+            "username": data.username, 
+            "service": "", 
+            "ip_address": data.ip_address
+          }
+          fetch(domainPath + "dimadb/allocate-database/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(allocate),
+          })
+            .then((res) => {
+              alert(res.statusText);
+            }
+            )
+            .catch((err) => alert(err));
+            window.location.replace('http://localhost:3000');
+
+        }
+        else {
+          alert("Something wrong! Please check again!");
+        }
+
+      })
       .catch((err) => alert(err));
   };
 
@@ -54,11 +79,11 @@ export default class Signup extends Component {
  render(){
   return (
     <main className="bg-dark vh-100">
-      <section className="d-flex align-items-center my-5 mt-lg-6 mb-lg-5">
+      <section className="d-flex align-items-center my-4 mt-lg-4 mb-lg-5">
         <Container>
           <p className="text-center">
-            <Card.Link as={Link} to={Routes.DashboardOverview.path} className="text-gray-700">
-              <FontAwesomeIcon icon={faAngleLeft} className="me-2" /> Back to homepage
+            <Card.Link as={Link} to={Routes.Signin.path} className="text-gray-700">
+              <FontAwesomeIcon icon={faAngleLeft} className="me-2" /> Back to log in
             </Card.Link>
           </p>
           <Row className="justify-content-center form-bg-image" style={{ backgroundImage: `url(${BgImage})` }}>
@@ -67,10 +92,10 @@ export default class Signup extends Component {
                 <div className="text-center text-md-center mb-4 mt-md-0">
                   <h3 className="mb-0">Create an account</h3>
                 </div>
-                <Form className="mt-4"
+                <Form className="mt-4 text-black"
                 onSubmit={(e) => this.handleSignup(e, this.state)}>
                 <Form.Group id="username" className="mb-4">
-                    <Form.Label>Username</Form.Label>
+                    <Form.Label className="text-black">Username</Form.Label>
                     <InputGroup>
                       <InputGroup.Text>
                         <FontAwesomeIcon icon={faUser} />
@@ -88,7 +113,7 @@ export default class Signup extends Component {
                   </Form.Group>
 
                   <Form.Group id="email" className="mb-4">
-                    <Form.Label>Your Email</Form.Label>
+                    <Form.Label>Email</Form.Label>
                     <InputGroup name="email">
                       <InputGroup.Text>
                         <FontAwesomeIcon icon={faEnvelope} />
@@ -101,7 +126,7 @@ export default class Signup extends Component {
                   </Form.Group>
 
                   <Form.Group id="password" className="mb-4">
-                    <Form.Label>Your Password</Form.Label>
+                    <Form.Label className="text-black">Password</Form.Label>
                     <InputGroup name="password">
                       <InputGroup.Text>
                         <FontAwesomeIcon icon={faUnlockAlt} />
@@ -116,18 +141,21 @@ export default class Signup extends Component {
                           />
                     </InputGroup>
                   </Form.Group>
-                  {/* <Form.Group id="confirmPassword" className="mb-4">
-                    <Form.Label>Confirm Password</Form.Label>
+                  <Form.Group id="ipAddress" className="mb-4">
+                    <Form.Label>IP Address</Form.Label>
                     <InputGroup>
                       <InputGroup.Text>
-                        <FontAwesomeIcon icon={faUnlockAlt} />
+                        <DnsIcon/>
                       </InputGroup.Text>
-                      <Form.Control required type="password" placeholder="Confirm Password" onChange={this.handleChange}/>
+                      <Form.Control required type="text" placeholder="IP Address" 
+                      onChange={this.handleChange}
+                      value={this.state.ip_address}
+                      name="ip_address"/>
                     </InputGroup>
-                  </Form.Group> */}
+                  </Form.Group>
                   <FormCheck type="checkbox" className="d-flex mb-4">
                     <FormCheck.Input required id="terms" className="me-2" />
-                    <FormCheck.Label htmlFor="terms">
+                    <FormCheck.Label htmlFor="terms" className="text-black">
                       I agree to the <Card.Link>terms and conditions</Card.Link>
                     </FormCheck.Label>
                   </FormCheck>
@@ -151,8 +179,9 @@ export default class Signup extends Component {
                     <FontAwesomeIcon icon={faGithub} />
                   </Button>
                 </div>
+
                 <div className="d-flex justify-content-center align-items-center mt-4">
-                  <span className="fw-normal">
+                  <span className="fw-normal text-black">
                     Already have an account?
                     <Card.Link as={Link} to={Routes.Signin.path} className="fw-bold">
                       {` Login here `}
