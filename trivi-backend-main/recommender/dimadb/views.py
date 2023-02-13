@@ -118,12 +118,18 @@ def get_key_metrics(request):
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
+    webevent  = WebEvent.objects.using(DB_client).\
+                                filter(created_at__range = [startdate, enddate]).values()
     itemevent = EventItem.objects.using(DB_client).values()
-    if (not itemevent):
+    if (not itemevent) or (not webevent):
             return Response({"Chưa có dữ liệu"})
-
+    webevent  = pd.DataFrame(webevent)
     itemevent = pd.DataFrame(itemevent)
-    groupby_object = itemevent.groupby(by=['event_type'])
+
+    itemevent.event_id = itemevent.event_id.astype('int64')
+    itemevent.product_id = itemevent.product_id.astype('int64')
+    df = webevent.merge(itemevent,how='inner', on = 'event_id')
+    groupby_object = df.groupby(by=['event_type'])
     result   = groupby_object.size().reset_index(name='counts')
     return Response({'message': result})
 
