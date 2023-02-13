@@ -5,10 +5,6 @@ import Header from "../component/Header";
 import { useTheme } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../theme";
-import LinkIcon from '@mui/icons-material/Link';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { Routes } from "../routes";
 import {  Form, Card, InputGroup } from '@themesberg/react-bootstrap';
 import { domainPath } from "../constants/utils";
 
@@ -36,6 +32,23 @@ const Config = () => {
     }
   );
 
+    const resetStrategy = () => {
+      setStrategy({
+        xpath: "",
+        strategy: "",
+        url:"",
+        event_type: ""
+      })
+
+    }
+
+    const resetScheduler = () => {
+      setScheduler({
+        cycle_time: "",
+        strategy: ""
+      })
+
+    }
 
     const handleStrategyChange = (e) => {
 
@@ -74,7 +87,7 @@ const Config = () => {
         .then((res) => res.json())
         .then((json) => {
           alert(json, " Config successfully!");
-          
+          resetStrategy();
         })
         .catch((err) => alert(err));   
     };
@@ -86,11 +99,12 @@ const Config = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({"scheduler":[data]}),
+        body: JSON.stringify({"scheduler":[data], "username":username}),
       })
         .then((res) => res.json())
         .then((json) => {
           alert(json, " Config successfully!");
+          resetScheduler();
         })
         .catch((err) => alert(err));  
     };
@@ -119,9 +133,6 @@ const Config = () => {
             <Form.Group id="strategy" className="mb-4">
             <Form.Label>Strategy</Form.Label>
             <InputGroup>
-                {/* <InputGroup.Text>
-                <ChatBubbleOutlineIcon/>
-                </InputGroup.Text> */}
                 <Select
                   name="strategy"
                   value={strategy.strategy}
@@ -137,14 +148,6 @@ const Config = () => {
                   <MenuItem value={"content"}>Content-based</MenuItem>
 
                 </Select>
-                {/* <Form.Control
-                required
-                type="text"
-                placeholder="Strategy"
-                name="strategy"
-                value={strategy.strategy}
-                onChange={handleStrategyChange}
-                /> */}
             </InputGroup>
             </Form.Group>
             <Form.Group id="xpath" className="mb-4">
@@ -240,14 +243,6 @@ const Config = () => {
             <Form.Group id="strategy" className="mb-4">
             <Form.Label>Strategy</Form.Label>
             <InputGroup>
-                {/* <Form.Control
-                required
-                type="text"
-                placeholder="Strategy"
-                name="strategy"
-                value={scheduler.strategy}
-                onChange={handleSchedulerChange}
-                /> */}
                  <Select
                   name="strategy"
                   value={scheduler.strategy}
@@ -267,27 +262,15 @@ const Config = () => {
             <Form.Group id="time" className="mb-4">
                 <Form.Label>Time</Form.Label>
                 <InputGroup>
-                {/* <InputGroup.Text>
-                    <AccessTimeIcon/>
-                </InputGroup.Text> */}
-                {/* <Form.Control
-                    autoFocus
-                    required
-                    type="number"
-                    placeholder="day"
-                    inputProps={{ min: 0, max: 10 }}
-                    name="XPath"
-                    value={config.XPath}
-                    onChange={handleChange}
-                /> */}
-                {/* <InputLabel id="demo-simple-select-label">Time</InputLabel> */}
+                
                 <Select
                   id="time"
-                  value={scheduler.XPath}
+                  value={scheduler.cycle_time}
                   label="Time"
                   onChange={handleSchedulerChange}
                   name="cycle_time"
                   fullWidth
+                  required
                 >
                   <MenuItem value={1}>1 day</MenuItem>
                   <MenuItem value={7}>1 week</MenuItem>

@@ -14,6 +14,7 @@ import DnsIcon from '@mui/icons-material/Dns';
 
 
 export default class Signup extends Component {
+
   static contextType = AppContext;
 
   constructor(props) {
@@ -23,6 +24,7 @@ export default class Signup extends Component {
       password: "",
       email: "",
       ip_address: ""
+
     };
   }
 
@@ -142,7 +144,7 @@ export default class Signup extends Component {
                     </InputGroup>
                   </Form.Group>
                   <Form.Group id="ipAddress" className="mb-4">
-                    <Form.Label>IP Address</Form.Label>
+                    <Form.Label>Web Ecommerce IP Address</Form.Label>
                     <InputGroup>
                       <InputGroup.Text>
                         <DnsIcon/>

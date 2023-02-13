@@ -11,6 +11,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MouseIcon from '@mui/icons-material/Mouse';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 import { Button } from "@mui/material";
+import profileImage from "../assets/img/profile.jpg";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -98,7 +99,8 @@ const Sidebar = () => {
                   alt="profile-user"
                   width="100px"
                   height="100px"
-                  src={`../assets/img/profile.jpg`}
+                  src="https://picsum.photos/200"
+                  // src={`url(${profileImage})`} 
                   style={{ cursor: "pointer", borderRadius: "50%" }}
                 />
 
