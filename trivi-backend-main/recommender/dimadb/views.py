@@ -191,7 +191,7 @@ def allocate_database(request):
     list_used = list(ManageAccount.objects.values_list('database_name',flat=True))
     
     for database_name in settings.DATABASES:
-        if database_name in list_used: continue
+        if database_name == 'default' or database_name in list_used: continue
         db_conn = connections[database_name]
         try:
             c = db_conn.cursor()

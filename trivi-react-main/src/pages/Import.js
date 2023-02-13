@@ -69,13 +69,13 @@ const ImportData = () => {
         // formData.append('file', file);
         // formData.append('table', table);
         // formData.append('username', username);
-    
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("table", table);
+        formData.append("username", username);
         fetch(domainPath + "dimadb/import-csv/", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({"file": file, "table": table, "username": username }),
+          body: formData,
         })
           .then((res) => res.json())
           .then((json) => console.log(json))
