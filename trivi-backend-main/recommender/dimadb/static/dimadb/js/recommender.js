@@ -59,7 +59,7 @@ async function send_capture(token, path,current_page,text) {
           setCookie("recommender_cookie", result['token'], 365);
         }
         if (result['message'] == "popup"){
-          showPopup()
+          showPopup(result.list_recommend)
           setTimeout(closePopup, 8000);
         }
         return result

@@ -295,7 +295,6 @@ def get_capture(request):
     df_path['check_path'] = df_path['xpath'].apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
-        return Response({"message":"popup"})
         return Response({"2 không có chiến lược ở đường click"})
     event_type = df_click['event_type'].iat[0]
     statistic = df_click['strategy'].iat[0]
