@@ -242,6 +242,26 @@ def allocate_database(request):
             return Response({"DONE"})
     return Response({"Đã hết database để cung cấp"})
 
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def check_allocate_database(request):
+    list_used = list(ManageAccount.objects.values_list('database_name',flat=True))
+    
+    for database_name in settings.DATABASES:
+        if database_name == 'default' or database_name in list_used: continue
+        db_conn = connections[database_name]
+        try:
+            c = db_conn.cursor()
+        except OperationalError:
+            connected = False
+        else:
+            connected = True
+        if connected:
+            return Response({"message":"available"})
+    return Response({"Đã hết database để cung cấp"})
+
+
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([])
@@ -318,25 +338,21 @@ def get_capture(request):
     if event_type == 'Login':
         return Response({"message":"login","token":new_token})
     if need_recommend:
+        list_product = ""
         if statistic == 'colab':
             list_product = predict_product_colab(df_user.iloc[0]['customer_id'],DB_client = DB_client)
-            info = add_more_information_for_product_id(list_product,DB_client)
-            return Response({'type':'colab','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
         if statistic == 'demographic':
             list_product = predict_model_demographic(df_user.iloc[0]['customer_id'],DB_client = DB_client)
-            info = add_more_information_for_product_id(list_product,DB_client)
-            return Response({'type':'demographic','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
         if statistic == 'content':
             product_filter = Product.objects.using(DB_client).filter(url=body_json['current_page'])
             if product_filter:
                 product_id = product_filter.all()[0].product_id
                 list_product = predict_model_contentbase(product_id,DB_client = DB_client)
-                info = add_more_information_for_product_id(list_product,DB_client)
-                return Response({'type':'contentbase','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
         if statistic == 'hot':
             list_product = predict_model_hot(DB_client = DB_client)
+        if isinstance(list_product, list): 
             info = add_more_information_for_product_id(list_product,DB_client)
-            return Response({'type':'hot','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
+            return Response({'type':'colab','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
 
     return Response({"Nothing"})
 

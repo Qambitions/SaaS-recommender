@@ -7,6 +7,7 @@ urlpatterns = [
     path('get-capture/', get_capture),
     path('test/', test),
     path('allocate-database/', allocate_database),
+    path('check-allocate-database/', check_allocate_database),
     path('add-recommender-strategy/', add_recommender_strategy),
     path('train-colab-model/', train_colab_model_api),
     path('add-scheduler/', add_scheduler),
