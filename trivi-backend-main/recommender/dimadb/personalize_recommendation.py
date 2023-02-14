@@ -14,6 +14,7 @@ import tensorflow_recommenders as tfrs
 from sklearn.cluster import KMeans
 from .models import *
 from datetime import datetime
+from recommender import settings
 import string
 import random
 import joblib
@@ -54,8 +55,10 @@ class InitClass_colab:
 class ListinitClass_colab(metaclass = SingletonMeta):
     def __init__(self):
         super().__init__() 
-        self.init = {"test1"  : InitClass_colab('test1'),
-                                "test2" : InitClass_colab('test2')}
+        self.init = {}
+        for database_name in settings.DATABASES:
+            if database_name == 'default': continue
+            self.init[database_name] = InitClass_colab(database_name)
     def update_init(self,DB_client):
         self.init[DB_client] = InitClass_colab(DB_client)
 
@@ -242,18 +245,17 @@ class ContentBaseModel():
 class ListModel(metaclass = SingletonMeta):
     def __init__(self,num=2):
         super().__init__()
-        self.number_model = 4
-        self.list_model_colab = {"test1"  : RetailModel('test1'),
-                                "test2" : RetailModel('test2')}
+        self.list_model_colab       = {}
+        self.list_model_hot         = {}
+        self.list_model_demographic = {}
+        self.list_model_contentbase = {}
+        for database_name in settings.DATABASES:
+            if database_name == 'default': continue
+            self.list_model_colab[database_name]       = RetailModel(database_name)
+            self.list_model_hot[database_name]         = HotModel(database_name)
+            self.list_model_demographic[database_name] = DemographicModel(database_name)
+            self.list_model_contentbase[database_name] = ContentBaseModel(database_name)
 
-        # self.list_model_hot   = {"test1"  : HotModel('test1'),
-        #                         "test2" : HotModel('test2')}
-
-        # self.list_model_demographic = {"test1"  : DemographicModel('test1'),
-        #                         "test2" : DemographicModel('test2')}
-
-        # self.list_model_contentbase = {"test1"  : ContentBaseModel('test1'),
-        #                         "test2" : ContentBaseModel('test2')}
     
     def func_train_model_colab(self, DB_client):
         model = RetailModel(DB_client)
@@ -317,6 +319,8 @@ def load_model_colab(DB_client):
     recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "colab")
     max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
     record      = recomemnder.filter(created_at = max_time)
+    if not record:
+        return False
     path        = record[0].model_path
     predict_model.load_weights(path) 
     return predict_model
@@ -327,6 +331,9 @@ def load_model_demographic(DB_client):
     recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "demo")
     max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
     record      = recomemnder.filter(created_at = max_time)
+    if not record:
+        print("aaa")
+        return False
     path        = record[0].model_path
     predict_model = joblib.load(path)
     return predict_model
@@ -347,8 +354,9 @@ def predict_product_colab(user, top_n=3,DB_client = ""):
     products                        = models.list_model_colab[DB_client].products                      
     ratings                         = models.list_model_colab[DB_client].ratings
     
-    #TODO: load from db
     predict_model =  load_model_colab(DB_client)
+    if predict_model == False:
+        return "chưa có model"
     
     # Create a model that takes in raw query features, and
     index = tfrs.layers.factorized_top_k.BruteForce(predict_model.user_model)
@@ -375,6 +383,7 @@ def predict_model_hot(top_n=3, DB_client = ""):
     if models.list_model_hot[DB_client].ready == False:
         return "chưa có model"
     result = models.list_model_hot[DB_client].res
+    result   = result['product_id'].tolist()
     return result[:top_n]
 
 def predict_model_contentbase(product_id, top_n=3, DB_client = ""):
@@ -401,6 +410,9 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     if models.list_model_demographic[DB_client].ready == False:
         return "chưa có model"
     predict_model =  load_model_demographic(DB_client)
+    if predict_model == False:
+        return "chưa có model"
+
     df_cus = pd.DataFrame(CustomerProfile.objects.using(DB_client).values())
     df_cus['age'] = df_cus['dob'].apply(calculate_age)
     df_cus['city_label']   = df_cus['city'].rank(method='dense', ascending=True).astype(int)
@@ -420,6 +432,8 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     groupby_object = df.groupby(by=['product_id'], as_index=True, sort=False)
     result   = groupby_object.size().reset_index(name='counts')
     result   = result.sort_values(by=['counts'],ascending=False)
+    result   = result['product_id'].tolist()
+
     return result[:top_n]
 
 if 'runserver' in sys.argv:

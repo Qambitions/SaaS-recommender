@@ -59,6 +59,7 @@ async function send_capture(token, path,current_page,text) {
           setCookie("recommender_cookie", result['token'], 365);
         }
         if (result['message'] == "popup"){
+          closePopup()
           showPopup(result['list_recommend'])
           setTimeout(closePopup, 20000);
           var span = document.getElementsByClassName("close_recommend_19clc")[0];
