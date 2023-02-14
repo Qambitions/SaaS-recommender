@@ -59,8 +59,12 @@ async function send_capture(token, path,current_page,text) {
           setCookie("recommender_cookie", result['token'], 365);
         }
         if (result['message'] == "popup"){
-          showPopup(result.list_recommend)
-          setTimeout(closePopup, 8000);
+          showPopup(result['list_recommend'])
+          setTimeout(closePopup, 20000);
+          var span = document.getElementsByClassName("close_recommend_19clc")[0];
+          span.onclick = function() {
+            closePopup()
+          }
         }
         return result
       })
@@ -70,7 +74,7 @@ async function send_capture(token, path,current_page,text) {
   catch (error){
     console.log(error)
   }
-    
+  
   return []
 }
 function closePopup() {
@@ -78,24 +82,37 @@ function closePopup() {
   div_rec.innerHTML = ""
 }
 
-function showPopup() {
+function showPopup(list_recommend) {
   var div_rec = document.getElementById("recommendations");
   var popup = document.createElement("div");
-  popup.innerHTML = "This is a pop-up!";
-  popup.style.backgroundColor = "lightblue";
+  // popup.innerHTML = "This is a pop-up!";
+  popup.style.backgroundColor = "#FCF8E8";
   popup.style.position = "fixed";
   popup.style.bottom = "5%";
   popup.style.right = "5%";
   popup.style.padding = "20px";
   popup.style.width = "600px";
-  popup.style.height = "200px";
+  popup.style.height = "250px";
   popup.style.borderRadius = "5px";
   popup.style.zIndex = "999";
   popup.style.display = "block";
 
-  
+  popup.innerHTML += "<button class=\"close_recommend_19clc\"> X </button> "; 
+
+  n = (list_recommend.length);
+  var html="";
+
+  for(i = 0; i <= (n-1); i++)
+  {
+  var list = list_recommend[i];
+    html = "<div class=\"recommend-container\"><a href=\"" + list.url + "\">" +
+          "<img src=\"" + list.image +"\"  width=\"50\" height=\"50\" class=\"recommend-image\">" + "<span class=\"recommend-name\">"+list.name+"</span>"+
+          "</a></div>"
+    popup.innerHTML += html;
+  }
+
   div_rec.appendChild(popup)
-}
+}  
 
 function debounce_leading(func, timeout = 300){
   let timer;
