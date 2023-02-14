@@ -154,6 +154,14 @@ DATABASES = {
                 'options': '-c search_path=test2'
         },
     },
+    'mysql_db': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': env('DB_NAME_mysql'),
+        'USER': env('DB_USER_mysql'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST_mysql'),
+        'PORT': env('DB_PORT_mysql'),
+    },
 }
 
 
