@@ -97,6 +97,48 @@ def get_report(request):
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
+def get_diagram_data(request):
+    username          = request.GET['username']
+    enddate = datetime.today()
+    startdate = enddate - timedelta(days=365)
+    
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
+    if df_manageClient.shape[0] == 0:
+        return Response({"Chưa có đăng ký"})
+    DB_client = df_manageClient.iloc[0]['database_name']
+    session   = Session.objects.using(DB_client).values()
+    webevent  = WebEvent.objects.using(DB_client).\
+                                filter(created_at__range = [startdate, enddate]).values()
+    itemevent = EventItem.objects.using(DB_client).values()
+    if (not  session) or (not webevent) or (not itemevent):
+            return Response({"Chưa có dữ liệu"})
+    session   = pd.DataFrame(session)      
+    webevent  = pd.DataFrame(webevent)
+    itemevent = pd.DataFrame(itemevent)
+
+    webevent.session_id = webevent.session_id.astype('int64')
+    itemevent.event_id = itemevent.event_id.astype('int64')
+    itemevent.product_id = itemevent.product_id.astype('int64')
+    df = session.merge(webevent,how='inner', on = 'session_id')
+    df = df.merge(itemevent,how='inner', on = 'event_id')
+    groupby_object = df.groupby(['event_type', pd.Grouper(key = "created_at",freq="1D")])
+    result   = groupby_object.size().reset_index(name='counts')
+
+    result_click = result[result["event_type"] == "Click"][["created_at","counts"]]
+    result_atc = result[result["event_type"] == "Add to cart"][["created_at","counts"]]
+    result_rfc = result[result["event_type"] == "Remove from cart"][["created_at","counts"]]
+    result_view = result[result["event_type"] == "View"][["created_at","counts"]]
+    result_login = result[result["event_type"] == "Login"][["created_at","counts"]]
+    return Response({'message':{'Click':result_click,
+                                'Add to cart':result_atc,
+                                'Remove from cart':result_rfc,
+                                'View':result_view,
+                                'Login':result_login} })
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
 def get_list_hot_items(request):
     username          = request.GET['username']
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())

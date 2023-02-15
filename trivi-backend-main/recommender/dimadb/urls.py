@@ -17,4 +17,5 @@ urlpatterns = [
     path('import-csv/', import_csv),
     path('get-key-metrics/', get_key_metrics),
     path('get-hot-items/', get_list_hot_items),
+    path('get-diagram-data/', get_diagram_data),
 ]
