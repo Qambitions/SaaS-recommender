@@ -403,7 +403,7 @@ def predict_model_contentbase(product_id, top_n=3, DB_client = ""):
     result = []
     for i in similar_item_index:
         result.append(df['product_id'].iat[i])
-    return result
+    return result[:top_n]
 
 def predict_model_demographic(user, top_n=3, DB_client = ""):
     models = ListModel()

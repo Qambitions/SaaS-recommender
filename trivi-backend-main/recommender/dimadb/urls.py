@@ -13,7 +13,7 @@ urlpatterns = [
     path('add-scheduler/', add_scheduler),
     path('train-demographic-model/', train_demographic_model_api),
     path('train-hot-model/', train_hot_model_api),
-    path('train-content-model/', train_hot_model_api),
+    path('train-content-model/', train_contentbase_model_api),
     path('import-csv/', import_csv),
     path('get-key-metrics/', get_key_metrics),
     path('get-hot-items/', get_list_hot_items),

@@ -1,5 +1,6 @@
 import pandas as pd
 from .models import *
+import numpy as np
 
 def check_allow_fields(df, model):
     compulsory_fields = [field.name for field in model._meta.get_fields() if field.null==False]
@@ -14,6 +15,8 @@ def check_allow_fields(df, model):
             field_type = model._meta.get_field(field).get_internal_type()
             if field_type == 'DateTimeField': 
                 df[field] = pd.to_datetime(df[field])
+            if field_type == 'IntegerField' or field_type == 'DecimalField': 
+                df = df.replace('', 0, regex=True)
     return fields_list,df
 
 def add_df_model_with_some_fields(df, model,DB_client, right_fields=[]):
