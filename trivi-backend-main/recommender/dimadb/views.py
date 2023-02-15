@@ -97,6 +97,21 @@ def get_report(request):
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
+def get_list_hot_items(request):
+    username          = request.GET['username']
+    df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
+    if df_manageClient.shape[0] == 0:
+        return Response({"Chưa có đăng ký"})
+    DB_client = df_manageClient.iloc[0]['database_name']
+    list_product = predict_model_hot(top_n=10,DB_client = DB_client)
+    info = add_more_information_for_product_id(list_product,DB_client)
+    return Response({'message': info})
+
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
 def get_key_metrics(request):
     time_range        = request.GET['time']
     username          = request.GET['username']
