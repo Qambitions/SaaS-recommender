@@ -1,35 +1,109 @@
-import React from "react";
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import React, { useEffect, useState} from "react";
+import { Box, Button, IconButton, Typography, useTheme, Select, MenuItem } from "@mui/material";
+import {  Form, InputGroup } from '@themesberg/react-bootstrap';
 import { tokens } from "../theme";
-// import { mockTransactions } from "../../data/mockData";
+
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
-import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import TrafficIcon from "@mui/icons-material/Traffic";
+import MouseIcon from '@mui/icons-material/Mouse';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import Header from "../component/Header";
 // import LineChart from "../../components/LineChart";
 // import GeographyChart from "../../components/GeographyChart";
 // import BarChart from "../../components/BarChart";
 import StatBox from "../component/StatBox";
 import ProgressCircle from "../component/ProgressCircle";
+import { domainPath } from "../constants/utils";
+
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const mockTransactions = [{
-    txId: "123",
-    user: "Linh",
-    cost: "123.000"
+  const username = localStorage.getItem('userName');
+  // const [query, setQuery] = useState({
+  //   username: username,
+  //   time: "year"
+  // });
 
-  },
-  {
-    txId: "143",
-    user: "Khoa",
-    cost: "125.000"
+  const [time, setTime] = useState("year");
+  const [products, setProducts] = useState([]);
 
-  },
-];
+
+
+  const [keys, setKeys] = useState([{
+    event_type: "",
+    counts: ""
+  }])
+
+  const changeFormat = (data) => {
+    var result = [];
+    var icon = [<AddShoppingCartIcon />, <MouseIcon/>, <ShoppingCartCheckoutIcon/>, <RemoveRedEyeIcon/> ]
+    for(var i=0;i<data.counts.length;i++)
+            {
+                result[result.length] = { 
+                    "event_type": data.event_type[i], 
+                    "counts": data.counts[i].toLocaleString(),
+                    "icon": icon[i]     
+                }; 
+            }
+            return result;
+
+}
+
+
+
+  const fetchKeys = async(time) => {
+    const url = domainPath + "dimadb/get-key-metrics/?time="+time+
+                        "&username="+username;
+      const result = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // params: JSON.stringify(query),
+        }).then((res) => res.json())
+        .then((data) => {
+          // setClicks(data.message.toLocaleString());
+          setKeys(changeFormat(data.message));
+          console.log("Message", changeFormat(data.message));
+          return data;
+        }).catch((err) => alert("Error in dashboard"));
+
+  }
+
+  const fetchProducts = async(time) => {
+    const url = domainPath + "dimadb/get-hot-items/?username="+username;
+      const result = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // params: JSON.stringify(query),
+        }).then((res) => res.json())
+        .then((data) => {
+          setProducts(data.message);
+          console.log("Products", data.message);
+          return data;
+        }).catch((err) => alert("Error in dashboard"));
+
+  }
+
+  useEffect(() => {   
+    fetchKeys("year").catch(console.error); 
+    fetchProducts("year").catch(console.error); 
+
+    }, []);
+
+    const showKeys = () => {
+      console.log(keys);
+    }
+    const handleFilterChange = (e) => {
+      setTime(e.target.value);
+      fetchKeys(e.target.value);
+      
+    }
+
   return (
     <>
     <Box m="20px" >
@@ -45,10 +119,32 @@ const Dashboard = () => {
               fontWeight: "bold",
               padding: "10px 20px",
             }}
+            onClick={showKeys}
           >
             <DownloadOutlinedIcon sx={{ mr: "10px" }}/>
             Download Reports
           </Button>
+        </Box>
+        <Box>
+        <Form.Group id="time" className="mb-4">
+            <Form.Label>Filter by time: </Form.Label>
+            <InputGroup>
+                 <Select
+                  name="time"
+                  value={time}
+                  label="Time"
+                  onChange={handleFilterChange}
+                  required
+                  type="text"
+                  fullWidth     
+                >
+                  <MenuItem value={"year"} >Year</MenuItem>
+                  <MenuItem value={"month"}>Month</MenuItem>
+                  <MenuItem value={"week"}>Week</MenuItem>
+
+                </Select>
+            </InputGroup>
+            </Form.Group>    
         </Box>
       </Box>
 
@@ -60,82 +156,28 @@ const Dashboard = () => {
         gap="20px"
       >
         {/* ROW 1 */}
-        <Box
+        {keys && keys.map((item, index) =>  
+          <Box
           gridColumn="span 3"
           backgroundColor={colors.primary[400]}
           display="flex"
           alignItems="center"
           justifyContent="center"
+          key={index}
         >
           <StatBox
-            title="1,234"
-            subtitle="Views"
-            progress="0.75"
-            increase="+14%"
-            icon={
-              <EmailIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
+            title={item.counts}
+            subtitle={item.event_type}
+            icon = {item.icon}
+            // icon={
+            //   <EmailIcon
+            //     sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+            //   />
+            // }
           />
+
         </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="1,234"
-            subtitle="Clicks"
-            progress="0.50"
-            increase="+21%"
-            icon={
-              <PointOfSaleIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="32,441"
-            subtitle="Add to cart"
-            progress="0.30"
-            increase="+5%"
-            icon={
-              <PersonAddIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="1,325,134"
-            subtitle="Purchase"
-            progress="0.80"
-            increase="+43%"
-            icon={
-              <TrafficIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
+        )}
 
         {/* ROW 2 */}
         <Box
@@ -193,12 +235,12 @@ const Dashboard = () => {
             p="15px"
           >
             <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
+              Hot products
             </Typography>
           </Box>
-          {/* {mockTransactions.map((transaction, i) => (
+          {products.map((item, i) => (
             <Box
-              key={`${transaction.txId}-${i}`}
+              key={`${item.id}-${i}`}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
@@ -211,22 +253,22 @@ const Dashboard = () => {
                   variant="h5"
                   fontWeight="600"
                 >
-                  {transaction.txId}
+                  {item.id}
                 </Typography>
                 <Typography color={colors.grey[100]}>
-                  {transaction.user}
+                  {item.name}
                 </Typography>
               </Box>
-              <Box color={colors.grey[100]}>{transaction.date}</Box>
+              {/* <Box color={colors.grey[100]}>{transaction.date}</Box>
               <Box
                 backgroundColor={colors.greenAccent[500]}
                 p="5px 10px"
                 borderRadius="4px"
               >
                 ${transaction.cost}
-              </Box>
+              </Box> */}
             </Box>
-          ))} */}
+          ))}
         </Box>
 
         {/* ROW 3 */}

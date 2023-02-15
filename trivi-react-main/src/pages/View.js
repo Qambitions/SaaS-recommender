@@ -1,13 +1,11 @@
 import React from "react";
 import ViewTemplate from "../component/ViewTemplate";
 
-const ViewClicks = () => {
+const View = () => {
   return(
     <>
-    <ViewTemplate event_type="Click"/>
+    <ViewTemplate event_type="View"/>
     </>
   )
 }
-
-
-export default ViewClicks;
+export default View;

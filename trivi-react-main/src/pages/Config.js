@@ -1,21 +1,20 @@
 import React, { useState } from "react";
-import { Box, Button, TextField, InputLabel, Select, MenuItem } from "@mui/material";
+import { Box, Button, TextField, InputLabel, Select, MenuItem, FormHelperText} from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../component/Header";
 import { useTheme } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../theme";
-import {  Form, Card, InputGroup } from '@themesberg/react-bootstrap';
+import {  Form, InputGroup } from '@themesberg/react-bootstrap';
 import { domainPath } from "../constants/utils";
 
-
-import { Link } from "react-router-dom";
 
 const Config = () => {
   const username = localStorage.getItem('userName') || 'Unknown';
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [error, setError] = useState(false);
+
   const [strategy, setStrategy] = useState(
     {
       xpath: "",
@@ -60,6 +59,16 @@ const Config = () => {
             return newState;
           });
 
+        if (value=="Login") {
+          setError(true)
+          setStrategy((prevstate) => {
+            const newState = { ...prevstate };
+            newState["strategy"] = "";
+            return newState;
+          });
+        }
+        else setError(false);
+
         
     };
 
@@ -73,6 +82,11 @@ const Config = () => {
         });
 
   };
+
+  const getDisabled = val => {
+    if (val=="Login") return { disabled: true };
+    return {};
+  }
 
     
     const handleStrategySubmit = (e, data) => {
@@ -89,7 +103,8 @@ const Config = () => {
           alert(json, " Config successfully!");
           resetStrategy();
         })
-        .catch((err) => alert(err));   
+        .catch((err) => alert("Error in config")); 
+      console.log({"strategies":[data], "username":username})  
     };
 
     const handleSchedulerSubmit = (e, data) => {
@@ -141,6 +156,7 @@ const Config = () => {
                   required
                   type="text"
                   fullWidth
+                  {...getDisabled(strategy.event_type)}
                 >
                   <MenuItem value={"colab"}>Collaborative Filtering</MenuItem>
                   <MenuItem value={"demographic"}>Demographic</MenuItem>
@@ -198,11 +214,13 @@ const Config = () => {
                   fullWidth
                 >
                   <MenuItem value={"Click"}>Click</MenuItem>
-                  <MenuItem value={"Log in"}>Log in</MenuItem>
+                  <MenuItem value={"Login"}>Login</MenuItem>
                   <MenuItem value={"View"}>View</MenuItem>
                   <MenuItem value={"Add to cart"}>Add to cart</MenuItem>
 
                 </Select>
+                {error && <FormHelperText>You can not choose strategy when event type is "Login"</FormHelperText>}
+
             </InputGroup>
             </Form.Group>
 

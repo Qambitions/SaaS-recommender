@@ -27,6 +27,9 @@ import ImportData from "./Import";
 import Dashboard from "./Dashboard";
 import ViewClicks from "./ViewClicks";
 import Config from "./Config";
+import ViewAddToCart from "./ViewAddToCart";
+import ViewRemoveCart from "./ViewRemoveCart";
+import View from "./View";
 
 // components
 import Sidebar from "../component/Sidebar";
@@ -170,7 +173,13 @@ return (
         <RouteWithSidebar exact path={Routes.Dashboard.path} component={Dashboard} />
         <RouteWithSidebar exact path={Routes.Import.path} component={ImportData} />
         <RouteWithSidebar exact path={Routes.ViewClicks.path} component={ViewClicks} />
+        <RouteWithSidebar exact path={Routes.ViewAddToCart.path} component={ViewAddToCart} />
+        <RouteWithSidebar exact path={Routes.ViewRemoveCart.path} component={ViewRemoveCart} />
+        <RouteWithSidebar exact path={Routes.View.path} component={View} />
+
         <RouteWithSidebar exact path={Routes.Config.path} component={Config} />
+        <RouteWithLoader exact path={Routes.NotFound.path} component={NotFoundPage} />
+
 
 
         <Redirect to={Routes.NotFound.path} />

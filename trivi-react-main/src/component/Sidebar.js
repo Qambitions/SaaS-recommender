@@ -10,8 +10,12 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import LogoutIcon from '@mui/icons-material/Logout';
 import MouseIcon from '@mui/icons-material/Mouse';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import { Button } from "@mui/material";
-import profileImage from "../assets/img/profile.jpg";
+import { Routes } from "../routes";
+
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -22,7 +26,10 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
       style={{
         color: colors.grey[100],
       }}
-      onClick={() => setSelected(title)}
+      onClick={() => {
+        setSelected(title);
+        localStorage.setItem('selectedScreen',title);
+      }}
       icon={icon}
     >
       <Typography>{title}</Typography>
@@ -35,7 +42,7 @@ const Sidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selected, setSelected] = useState("Dashboard");
+  const [selected, setSelected] = useState(localStorage.getItem('selectedScreen') || 'Dashboard');
   const history = useHistory();
 
   const handleLogout = () => {
@@ -124,7 +131,7 @@ const Sidebar = () => {
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
               title="Dashboard"
-              to="/"
+              to={Routes.Dashboard.path}
               icon={<HomeOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -139,7 +146,7 @@ const Sidebar = () => {
 
             <Item
               title="Configuration"
-              to="/config"
+              to={Routes.Config.path}
               icon={<DisplaySettingsIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -155,61 +162,12 @@ const Sidebar = () => {
 
             <Item
               title="Import data"
-              to="/import-data"
+              to={Routes.Import.path}
               icon={<UploadIcon />}
               selected={selected}
               setSelected={setSelected}
             />
-            {/* <Item
-              title="Calendar"
-              to="/calendar"
-              icon={<CalendarTodayOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="FAQ Page"
-              to="/faq"
-              icon={<HelpOutlineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Charts
-            </Typography>
-            <Item
-              title="Bar Chart"
-              to="/bar"
-              icon={<BarChartOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Pie Chart"
-              to="/pie"
-              icon={<PieChartOutlineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Line Chart"
-              to="/line"
-              icon={<TimelineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Geography Chart"
-              to="/geography"
-              icon={<MapOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            /> */}
+         
           <Typography
               variant="h6"
               color={colors.grey[300]}
@@ -220,11 +178,35 @@ const Sidebar = () => {
 
             <Item
               title="Clicks"
-              to="/view-clicks"
+              to={Routes.ViewClicks.path}
               icon={<MouseIcon />}
               selected={selected}
               setSelected={setSelected}
             />
+
+            <Item
+              title="Add to cart"
+              to={Routes.ViewAddToCart.path}
+              icon={<AddShoppingCartIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+
+            <Item
+              title="Remove from cart"
+              to={Routes.ViewRemoveCart.path}
+              icon={<ShoppingCartCheckoutIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="View"
+              to={Routes.View.path}
+              icon={<RemoveRedEyeIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+
            
 
           {isCollapsed ? 

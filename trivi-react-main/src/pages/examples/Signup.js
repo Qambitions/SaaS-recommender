@@ -1,5 +1,6 @@
 
-import React, {Component} from "react";
+import React, {Component, useEffect} from "react";
+import {Redirect} from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faEnvelope, faUnlockAlt, faUser } from "@fortawesome/free-solid-svg-icons";
 import { faFacebookF, faGithub, faTwitter } from "@fortawesome/free-brands-svg-icons";
@@ -17,6 +18,7 @@ export default class Signup extends Component {
 
   static contextType = AppContext;
 
+
   constructor(props) {
     super(props);
     this.state = {
@@ -28,6 +30,11 @@ export default class Signup extends Component {
     };
   }
 
+  componentDidMount() {
+  
+    this.checkAllocate();
+  }
+
   handleChange = (e) => {
     const name = e.target.name;
     const value = e.target.value;
@@ -37,6 +44,24 @@ export default class Signup extends Component {
       return newState;
     });
   };
+
+  checkAllocate = () => {
+    fetch(domainPath + "dimadb/check-allocate-database/", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    })
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.message != "available") {
+        alert("We are generating new database... Please come back later!!");
+        window.location.replace('http://localhost:3000/404');      
+      }
+      else return true;
+    })
+    .catch((err) => alert(err));
+  }
 
   handleSignup = (e, data) => {
     e.preventDefault();
@@ -66,7 +91,7 @@ export default class Signup extends Component {
             }
             )
             .catch((err) => alert(err));
-            window.location.replace('http://localhost:3000');
+            window.location.replace('http://localhost:3000');      
 
         }
         else {
@@ -77,6 +102,7 @@ export default class Signup extends Component {
       .catch((err) => alert(err));
   };
 
+  
 
  render(){
   return (

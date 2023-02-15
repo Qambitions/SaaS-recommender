@@ -120,6 +120,7 @@ const ImportData = () => {
                     id={"csvFileInput"}
                     accept={".csv"}
                     onChange={handleFileChange}
+
                 />
                 {fileMissing && <FormHelperText>Please select a file!!</FormHelperText>}
 
