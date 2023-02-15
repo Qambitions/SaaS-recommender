@@ -103,7 +103,19 @@ def get_list_hot_items(request):
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
-    list_product = predict_model_hot(top_n=10,DB_client = DB_client)
+    web_event  =  pd.DataFrame(WebEvent.objects.using(DB_client).exclude(event_type = "Remove from cart").values())
+    event_item =  pd.DataFrame(EventItem.objects.using(DB_client).all().values())
+    
+    if web_event.shape[0] == 0 or event_item.shape[0] == 0:
+        return Response({'message': "chưa có dữ liệu"})
+
+    event_item.event_id = event_item.event_id.astype('int64')
+    df = web_event.merge(event_item,how="left", on = 'event_id')
+    groupby_object = df.groupby(by=['product_id'], as_index=True, sort=False)
+    # print(result[:top_n])
+    result   = groupby_object.size().reset_index(name='counts')
+    result   = result.sort_values(by=['counts'],ascending=False)
+    list_product = result[:10]['product_id']
     info = add_more_information_for_product_id(list_product,DB_client)
     return Response({'message': info})
 
