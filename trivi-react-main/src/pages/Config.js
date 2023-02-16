@@ -87,8 +87,6 @@ const Config = () => {
     if (val=="Login") return { disabled: true };
     return {};
   }
-
-    
     const handleStrategySubmit = (e, data) => {
       e.preventDefault();
       fetch(domainPath + "dimadb/add-recommender-strategy/", {

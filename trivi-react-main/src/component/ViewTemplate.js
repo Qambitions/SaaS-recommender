@@ -86,8 +86,9 @@ const ViewTemplate = (props) => {
               }).then((res) => res.json())
               .then((data) => {
                 setData(changeFormat(data.message))
+                
                 return data;
-              }).catch((err) => alert("Error in view template"));
+              }).catch((err) => alert("Please reload page and wait a second"));
 
         }
         fetchData().catch(console.error);  

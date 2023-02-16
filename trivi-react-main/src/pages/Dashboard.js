@@ -1,4 +1,5 @@
 import React, { useEffect, useState} from "react";
+import moment from "moment";
 import { Box, Button, IconButton, Typography, useTheme, Select, MenuItem } from "@mui/material";
 import {  Form, InputGroup } from '@themesberg/react-bootstrap';
 import { tokens } from "../theme";
@@ -9,7 +10,7 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import Header from "../component/Header";
-// import LineChart from "../../components/LineChart";
+import LineChart from "../component/LineChart";
 // import GeographyChart from "../../components/GeographyChart";
 // import BarChart from "../../components/BarChart";
 import StatBox from "../component/StatBox";
@@ -21,20 +22,15 @@ const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const username = localStorage.getItem('userName');
-  // const [query, setQuery] = useState({
-  //   username: username,
-  //   time: "year"
-  // });
 
   const [time, setTime] = useState("year");
   const [products, setProducts] = useState([]);
-
-
 
   const [keys, setKeys] = useState([{
     event_type: "",
     counts: ""
   }])
+
 
   const changeFormat = (data) => {
     var result = [];
@@ -51,8 +47,6 @@ const Dashboard = () => {
 
 }
 
-
-
   const fetchKeys = async(time) => {
     const url = domainPath + "dimadb/get-key-metrics/?time="+time+
                         "&username="+username;
@@ -61,14 +55,11 @@ const Dashboard = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          // params: JSON.stringify(query),
         }).then((res) => res.json())
         .then((data) => {
-          // setClicks(data.message.toLocaleString());
           setKeys(changeFormat(data.message));
-          console.log("Message", changeFormat(data.message));
           return data;
-        }).catch((err) => alert("Error in dashboard"));
+        }).catch((err) => alert("Please reload page and wait a second"));
 
   }
 
@@ -79,15 +70,14 @@ const Dashboard = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          // params: JSON.stringify(query),
         }).then((res) => res.json())
         .then((data) => {
           setProducts(data.message);
-          console.log("Products", data.message);
           return data;
-        }).catch((err) => alert("Error in dashboard"));
+        }).catch((err) => alert("Please reload page and wait a second"));
 
   }
+
 
   useEffect(() => {   
     fetchKeys("year").catch(console.error); 
@@ -95,9 +85,6 @@ const Dashboard = () => {
 
     }, []);
 
-    const showKeys = () => {
-      console.log(keys);
-    }
     const handleFilterChange = (e) => {
       setTime(e.target.value);
       fetchKeys(e.target.value);
@@ -110,21 +97,6 @@ const Dashboard = () => {
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Welcome to dashboard"/>
-        <Box>
-          <Button
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-            }}
-            onClick={showKeys}
-          >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }}/>
-            Download Reports
-          </Button>
-        </Box>
         <Box>
         <Form.Group id="time" className="mb-4">
             <Form.Label>Filter by time: </Form.Label>
@@ -216,9 +188,9 @@ const Dashboard = () => {
               </IconButton>
             </Box>
           </Box>
-          {/* <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
-          </Box> */}
+          <Box height="250px" m="-20px 0 0 0">
+            <LineChart isDashboard={true}/>
+          </Box>
         </Box>
         <Box
           gridColumn="span 4"
@@ -259,20 +231,12 @@ const Dashboard = () => {
                   {item.name}
                 </Typography>
               </Box>
-              {/* <Box color={colors.grey[100]}>{transaction.date}</Box>
-              <Box
-                backgroundColor={colors.greenAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                ${transaction.cost}
-              </Box> */}
             </Box>
           ))}
         </Box>
 
         {/* ROW 3 */}
-        <Box
+        {/* <Box
           gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
@@ -297,7 +261,7 @@ const Dashboard = () => {
             </Typography>
             <Typography>Includes extra misc expenditures and costs</Typography>
           </Box>
-        </Box>
+        </Box> */}
         {/* <Box
           gridColumn="span 4"
           gridRow="span 2"

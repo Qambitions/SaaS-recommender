@@ -56,7 +56,7 @@ export default class Signup extends Component {
     .then((json) => {
       if (json.message != "available") {
         alert("We are generating new database... Please come back later!!");
-        window.location.replace('http://localhost:3000/404');      
+        window.location.replace('http://localhost:4000/404');      
       }
       else return true;
     })
