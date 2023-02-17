@@ -28,24 +28,27 @@ const LineChart = ({ isDashboard = false }) => {
   const changeFormat = (data) => {
     var result = [];
     var colors = [tokens("dark").blueAccent[300], tokens("dark").greenAccent[500], tokens("dark").redAccent[200], tokens("dark").grey[200], tokens("dark").primary[200] ]
-    var id = ["Add to cart", "Click", "Login", "Remove from cart", "View"]
-    var id1 = ["AddToCart", "Click", "Login", "RemoveFromCart", "View"]
-
+    var id = ["Add to cart", "Click","Login", "Remove from cart", "View"]
+ 
 
     for(var i=0;i<5;i++)
     {
         var iData = [];
-        for (var j=0; j<data[id[i]].counts.length; j++){
-          iData[iData.length] = {
-            "x":  moment(data[id[i]].created_at[j]).format("YYYY/MM/DD"),
-            "y": data[id[i]].counts[j]
+        if (data[id[i]].counts.length!=0){
+          for (var j=0; j<data[id[i]].counts.length; j++){
+            iData[iData.length] = {
+              "x":  moment(data[id[i]].created_at[j]).format("YYYY/MM/DD"),
+              "y": data[id[i]].counts[j]
+            }
           }
-        }
-        result[result.length] = {  
-            "id" : id1[i],
+          result[result.length] = {  
+            "id" : id[i],
             "color": colors[i],
             "data": iData
         }; 
+        }
+        
+       
     }
       return result;
   }

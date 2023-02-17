@@ -170,14 +170,7 @@ const Dashboard = () => {
                 fontWeight="600"
                 color={colors.grey[100]}
               >
-                Revenue Generated
-              </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-              >
-                $59,342.32
+                Captured event statistic
               </Typography>
             </Box>
             <Box>
@@ -189,7 +182,7 @@ const Dashboard = () => {
             </Box>
           </Box>
           <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true}/>
+            <LineChart isDashboard={false}/>
           </Box>
         </Box>
         <Box
