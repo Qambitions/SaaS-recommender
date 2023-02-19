@@ -255,7 +255,8 @@ class ListModel(metaclass = SingletonMeta):
             self.list_model_hot[database_name]         = HotModel(database_name)
             self.list_model_demographic[database_name] = DemographicModel(database_name)
             self.list_model_contentbase[database_name] = ContentBaseModel(database_name)
-
+        self.list_model_colab_loaded = {}
+        self.list_model_demographic_loaded  = {}
     
     def func_train_model_colab(self, DB_client):
         model = RetailModel(DB_client)
@@ -268,7 +269,8 @@ class ListModel(metaclass = SingletonMeta):
         model.save_weights('./model/'+name, save_format='tf')
         x = RecommenderModel(created_at = datetime.now(), model_type = "colab",model_path='./model/'+name)
         x.save(using=DB_client)
-    
+        self.load_model_colab(DB_client)
+
     def func_train_model_hot(self, DB_client):
         self.list_model_hot[DB_client] = HotModel(DB_client)
 
@@ -284,10 +286,38 @@ class ListModel(metaclass = SingletonMeta):
         joblib.dump(model, './model/'+name)
         x = RecommenderModel(created_at = datetime.now(), model_type = "demo",model_path='./model/'+name)
         x.save(using=DB_client)
+        self.load_model_demographic(DB_client)
 
+    def load_model_colab(self,DB_client):
+        predict_model = self.list_model_colab[DB_client]
+        #query path file
+        recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "colab")
+        max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
+        record      = recomemnder.filter(created_at = max_time)
+        if not record:
+            self.list_model_colab_loaded['DB_client'] = False
+            return
+        path        = record[0].model_path
+        predict_model.load_weights(path) 
+        self.list_model_colab_loaded['DB_client'] = predict_model
+
+    def load_model_demographic(self, DB_client):
+        predict_model = self.list_model_demographic[DB_client].model
+        recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "demo")
+        max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
+        record      = recomemnder.filter(created_at = max_time)
+        if not record:
+            self.list_model_demographic_loaded['DB_client'] = False
+            return 
+        path        = record[0].model_path
+        predict_model = joblib.load(path)
+        self.list_model_demographic_loaded['DB_client'] = predict_model
 
 def start_model():
     models = ListModel()
+    for database_name in settings.DATABASES:
+        if database_name == 'default': continue
+        models.load_model_colab(database_name)
 
 def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
@@ -312,33 +342,6 @@ def train_model_contentbase(DB_client):
     models.func_train_model_content(DB_client)
     return True 
 
-def load_model_colab(DB_client):
-    models = ListModel()
-    predict_model = models.list_model_colab[DB_client]
-    #query path file
-    recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "colab")
-    max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
-    record      = recomemnder.filter(created_at = max_time)
-    if not record:
-        return False
-    path        = record[0].model_path
-    predict_model.load_weights(path) 
-    return predict_model
-
-def load_model_demographic(DB_client):
-    models = ListModel()
-    predict_model = models.list_model_demographic[DB_client].model
-    recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "demo")
-    max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
-    record      = recomemnder.filter(created_at = max_time)
-    if not record:
-        print("aaa")
-        return False
-    path        = record[0].model_path
-    predict_model = joblib.load(path)
-    return predict_model
-
-
 def predict_product_colab(user, top_n=3,DB_client = ""):
     # unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings = demo()
     user = {f"customer_id":[user]}
@@ -354,7 +357,7 @@ def predict_product_colab(user, top_n=3,DB_client = ""):
     products                        = models.list_model_colab[DB_client].products                      
     ratings                         = models.list_model_colab[DB_client].ratings
     
-    predict_model =  load_model_colab(DB_client)
+    predict_model =  models.list_model_colab_loaded[DB_client]
     if predict_model == False:
         return "chưa có model"
     
@@ -409,7 +412,7 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     models = ListModel()
     if models.list_model_demographic[DB_client].ready == False:
         return "chưa có model"
-    predict_model =  load_model_demographic(DB_client)
+    predict_model =  models.list_model_demographic_loaded[DB_client]
     if predict_model == False:
         return "chưa có model"
 
@@ -437,18 +440,7 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     return result[:top_n]
 
 if 'runserver' in sys.argv:
-    start_model()
+    # start_model()
     ...
 
-def magic_test(DB_client):
-    # train_model_demo(DB_client)
-    # predict_model_demo("1000000",DB_client='test2')
-    # train_model_contentbase("test1")
-    print(predict_product_colab('1000000',DB_client='test1'))
-    ...
-
-if __name__ == "__main__":
-
-    print(predict_product_colab("1000000"))
-    # a = InitClass()
     

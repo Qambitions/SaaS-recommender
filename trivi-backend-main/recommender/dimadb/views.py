@@ -496,7 +496,6 @@ def train_contentbase_model_api(request):
     train_model_contentbase(DB_client)
     return Response({"Done"},status=status.HTTP_200_OK)
 
-from .personalize_recommendation import magic_test
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])

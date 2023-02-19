@@ -9,7 +9,6 @@ import numpy  as np
 import tensorflow as tf
 from .models import *
 
-from src.utils.database import check_na_df, query_to_df, insert_update
 from .models import*
 
 def to_dictionary(df):

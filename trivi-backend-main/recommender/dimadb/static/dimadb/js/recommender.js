@@ -128,14 +128,15 @@ function debounce_leading(func, timeout = 300){
   };
 }
 
-function capture_event(e) {
+function capture_event(e, previousUrl) {
   var evt = e 
   if (evt) {
     if (evt.isPropagationStopped && evt.isPropagationStopped()) {
       return;
     }
     var time = Math.floor(Date.now() / 1000);
-    var product_href = window.location.href;
+    var product_href = previousUrl;
+    console.log(product_href)
     list = []
     if (e.type == 'scroll')
       list = ['scroll']

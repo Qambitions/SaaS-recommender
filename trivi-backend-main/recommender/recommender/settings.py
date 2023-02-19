@@ -106,22 +106,6 @@ WSGI_APPLICATION = 'recommender.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# mysql database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': env('DB_NAME'),
-#         'USER': env('DB_USER'),
-#         'PASSWORD': env('DB_PASSWORD'),
-#         'HOST': env('DB_HOST'),
-#         'PORT': env('DB_PORT'),
-#     },
-#     'OPTIONS': {
-#             'charset': 'utf8mb4',
-#             'use_unicode': True, 
-#         },
-# }
-
 # postgres db
 DATABASES = {
     'default': {
@@ -188,10 +172,6 @@ JWT_AUTH = {
     'JWT_VERIFY_EXPIRATION': False,
 }
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -226,10 +206,3 @@ try:
         env = yaml.safe_load(f)
 except FileNotFoundError:
     env = None
-
-
-DB_HOST     = os.environ.get('DBHOST',  env['host'])
-DB_PORT     = os.environ.get('DBPORT',  env['port'])
-DB_NAME     = os.environ.get('DBNAME',  env['database'])
-DB_USER     = os.environ.get('DBUSER',  env['user'])
-DB_PASSWORD = os.environ.get('DBPWORD', env['password'])
