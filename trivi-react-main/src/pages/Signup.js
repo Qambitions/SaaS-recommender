@@ -6,11 +6,11 @@ import { faAngleLeft, faEnvelope, faUnlockAlt, faUser } from "@fortawesome/free-
 import { faFacebookF, faGithub, faTwitter } from "@fortawesome/free-brands-svg-icons";
 import { Col, Row, Form, Card, Button, FormCheck, Container, InputGroup } from '@themesberg/react-bootstrap';
 import { Link } from 'react-router-dom';
-import { domainPath } from "../../constants/utils";
+import { domainPath } from "../constants/utils";
 
-import { Routes } from "../../routes";
-import BgImage from "../../assets/img/illustrations/signin.svg";
-import { AppContext } from "../AppContext";
+import { Routes } from "../routes";
+import BgImage from "../assets/img/illustrations/signin.svg";
+import { AppContext } from "./AppContext";
 import DnsIcon from '@mui/icons-material/Dns';
 
 

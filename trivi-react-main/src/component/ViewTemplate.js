@@ -1,5 +1,4 @@
 import React, { useEffect, useState} from "react";
-import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "./Header";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../theme";
@@ -9,7 +8,6 @@ import {  Form, InputGroup } from '@themesberg/react-bootstrap';
 
 
 const ViewTemplate = (props) => {
-  const isNonMobile = useMediaQuery("(min-width:600px)");
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const username = localStorage.getItem('userName') || 'Unknown';
@@ -18,13 +16,7 @@ const ViewTemplate = (props) => {
     event_type: props.event_type,
     time: "year"
   });
-  // const columns = [
-  //   "product_id", "product_name", "counts", "price", "revenue"
-  // ].map(c => ({
-  //   field: c,
-  //   headerName: c,
-  //   flex: 1,
-  // }));
+
   const handleFilterChange = (e) => {
     setTime(e.target.value);
     

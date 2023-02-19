@@ -6,23 +6,8 @@ import { ColorModeContext, useMode } from "../theme";
 
 
 // pages
-import Form from "./Form";
 import Signin from "./Signin";
-import ImportAPI from "./ImportAPI";
-import ImportFile from "./ImportFile";
-import ListItems from "./ListItems";
-import DeleteItems from "./DeleteItems";
-import Configuration from "./Configuration";
-import Documentation from "./Documentation";
-import Analytics from "./Analytics";
-import Recommend from "./Recommend";
-import NotFoundPage from "./examples/NotFound";
-import ServerError from "./examples/ServerError";
-import DashboardOverview from "./DashboardOverview";
-import ForgotPassword from "./ForgotPassword";
-import ImportHistory from "./ImportHistory";
-import SynchronizeGA from "./SynchronizeGA";
-
+import NotFoundPage from "./NotFound";
 import ImportData from "./Import";
 import Dashboard from "./Dashboard";
 import ViewClicks from "./ViewClicks";
@@ -34,43 +19,9 @@ import View from "./View";
 // components
 import Sidebar from "../component/Sidebar";
 import Topbar from "../component/Topbar";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import Preloader from "../components/Preloader";
-
-import Upgrade from "./Upgrade";
-import Transactions from "./Transactions";
-import Settings from "./Settings";
-import BootstrapTables from "./tables/BootstrapTables";
-import Signup from "./examples/Signup";
-import ResetPassword from "./examples/ResetPassword";
-import Lock from "./examples/Lock";
-import Profile from "./Profile";
-
-// documentation pages
-import DocsOverview from "./documentation/DocsOverview";
-import DocsDownload from "./documentation/DocsDownload";
-import DocsQuickStart from "./documentation/DocsQuickStart";
-import DocsLicense from "./documentation/DocsLicense";
-import DocsFolderStructure from "./documentation/DocsFolderStructure";
-import DocsBuild from "./documentation/DocsBuild";
-import DocsChangelog from "./documentation/DocsChangelog";
-import Accordion from "./components/Accordion";
-import Alerts from "./components/Alerts";
-import Badges from "./components/Badges";
-import Breadcrumbs from "./components/Breadcrumbs";
-import Buttons from "./components/Buttons";
-import Forms from "./components/Forms";
-import Modals from "./components/Modals";
-import Navs from "./components/Navs";
-import Navbars from "./components/Navbars";
-import Pagination from "./components/Pagination";
-import Popovers from "./components/Popovers";
-import Progress from "./components/Progress";
-import Tables from "./components/Tables";
-import Tabs from "./components/Tabs";
-import Tooltips from "./components/Tooltips";
-import Toasts from "./components/Toasts";
+import Footer from "../component/Footer";
+import Preloader from "../component/Preloader";
+import Signup from "./Signup";
 
 
 const RouteWithLoader = ({ component: Component, ...rest }) => {
@@ -144,14 +95,6 @@ const RouteWithSidebar = ({ component: Component, ...rest }) => {
                   />
               </main>
             </div>
-            {/* <main className="content">
-              <Navbar />
-              <Component {...props} />
-              <Footer
-                toggleSettings={toggleSettings}
-                showSettings={showSettings}
-              />
-            </main> */}
           </>
         ) : (
           <Redirect to={Routes.Signin.path} />
