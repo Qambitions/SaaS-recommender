@@ -19,7 +19,7 @@ import string
 import random
 import joblib
 
-from dimadb.tmp import prepare_data
+from dimadb.prepare_data_collab import prepare_data
 from django.db.models import Q, Count, F, Sum, Max
 from datetime import datetime, date
 import gensim
