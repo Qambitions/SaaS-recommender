@@ -13,6 +13,67 @@ import BgImage from "../assets/img/illustrations/signin.svg";
 import { AppContext } from "./AppContext";
 import DnsIcon from '@mui/icons-material/Dns';
 
+import { createBrowserHistory } from "history";
+
+
+const checkAllocate = () => {
+  const history = createBrowserHistory({forceRefresh:true});
+  fetch(domainPath + "dimadb/check-allocate-database/", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    }
+  })
+  .then((res) => res.json())
+  .then((json) => {
+    if (json.message != "available") {
+      alert("We are generating new database... Please come back later!!");
+      history.push('/');   
+    }
+    else return true;
+  })
+  .catch((err) => alert("Please reload the page!!"));
+}
+
+const handleSignup = (e, data) => {
+  const history = createBrowserHistory({forceRefresh:true});
+
+  e.preventDefault();
+  fetch(domainPath + "core/register/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  })
+    .then((res) => { 
+      if (res.status == 200) {
+        const allocate = {
+          "username": data.username, 
+          "service": "", 
+          "ip_address": data.ip_address
+        }
+        fetch(domainPath + "dimadb/allocate-database/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(allocate),
+        })
+          .then((res) => {
+            alert(res.statusText);
+          }
+          )
+          .catch((err) => alert(err));
+          history.push('/');
+      }
+      else {
+        alert("Something wrong! Please check again!");
+      }
+
+    })
+    .catch((err) => alert("Please reload the page!"));
+};
 
 export default class Signup extends Component {
 
@@ -32,7 +93,7 @@ export default class Signup extends Component {
 
   componentDidMount() {
   
-    this.checkAllocate();
+    checkAllocate();
   }
 
   handleChange = (e) => {
@@ -45,62 +106,7 @@ export default class Signup extends Component {
     });
   };
 
-  checkAllocate = () => {
-    fetch(domainPath + "dimadb/check-allocate-database/", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      }
-    })
-    .then((res) => res.json())
-    .then((json) => {
-      if (json.message != "available") {
-        alert("We are generating new database... Please come back later!!");
-        window.location.replace('http://localhost:4000/404');      
-      }
-      else return true;
-    })
-    .catch((err) => alert(err));
-  }
-
-  handleSignup = (e, data) => {
-    e.preventDefault();
-    fetch(domainPath + "core/register/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((res) => { 
-        if (res.status == 200) {
-          const allocate = {
-            "username": data.username, 
-            "service": "", 
-            "ip_address": data.ip_address
-          }
-          fetch(domainPath + "dimadb/allocate-database/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(allocate),
-          })
-            .then((res) => {
-              alert(res.statusText);
-            }
-            )
-            .catch((err) => alert(err));
-            window.location.replace('http://localhost:3000');      
-
-        }
-        else {
-          alert("Something wrong! Please check again!");
-        }
-
-      })
-      .catch((err) => alert(err));
-  };
+  
 
   
 
@@ -121,7 +127,7 @@ export default class Signup extends Component {
                   <h3 className="mb-0">Create an account</h3>
                 </div>
                 <Form className="mt-4 text-black"
-                onSubmit={(e) => this.handleSignup(e, this.state)}>
+                onSubmit={(e) => handleSignup(e, this.state)}>
                 <Form.Group id="username" className="mb-4">
                     <Form.Label className="text-black">Username</Form.Label>
                     <InputGroup>

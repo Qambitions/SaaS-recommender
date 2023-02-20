@@ -203,7 +203,7 @@ const Dashboard = () => {
               Hot products
             </Typography>
           </Box>
-          {products.map((item, i) => (
+          {products && products.map((item, i) => (
             <Box
               key={`${item.id}-${i}`}
               display="flex"

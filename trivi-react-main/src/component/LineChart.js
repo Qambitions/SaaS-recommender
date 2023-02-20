@@ -75,7 +75,8 @@ const LineChart = ({ isDashboard = false }) => {
     }, []);
 
   return (
-    <ResponsiveLine
+    <>
+    {diagram && <ResponsiveLine
       data={diagram}
       theme={{
         axis: {
@@ -177,7 +178,9 @@ const LineChart = ({ isDashboard = false }) => {
           ],
         },
       ]}
-    />
+    />}
+    
+    </>
   );
 };
 
