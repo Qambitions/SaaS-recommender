@@ -50,9 +50,9 @@ async function send_capture(token, path,current_page,next_page,text) {
           setCookie("recommender_cookie", result['token'], 365);
         }
         if (result['message'] == "popup"){
-          closePopup()
+          // closePopup()
           showPopup(result['list_recommend'])
-          setTimeout(closePopup, 20000);
+          // setTimeout(closePopup, 20000);
           var span = document.getElementsByClassName("close_recommend_19clc")[0];
           span.onclick = function() {
             closePopup()
@@ -88,6 +88,7 @@ function showPopup(list_recommend) {
   popup.style.borderRadius = "5px";
   popup.style.zIndex = "999";
   popup.style.display = "block";
+  popup.style.overflow = "auto";
 
   popup.innerHTML += "<button class=\"close_recommend_19clc\"> X </button> "; 
 
@@ -97,8 +98,8 @@ function showPopup(list_recommend) {
   for(i = 0; i <= (n-1); i++)
   {
   var list = list_recommend[i];
-    html = "<div class=\"recommend-container\"><a href=\"" + list.url + "\">" +
-          "<img src=\"" + list.image +"\"  width=\"50\" height=\"50\" class=\"recommend-image\">" + "<span class=\"recommend-name\">"+list.name+"</span>"+
+    html = "<div class=\"recommend-container\"><a href=\"" + list.url + "\" style=\"display: flex;\">" +
+          "<img src=\"" + list.image +"\"  width=\"50\" height=\"50\" class=\"recommend-image\">" + "<h3 class=\"recommend-name\">"+list.name+"</h3>"+
           "</a></div>"
     popup.innerHTML += html;
   }

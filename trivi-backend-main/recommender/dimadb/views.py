@@ -90,8 +90,8 @@ def get_report(request):
 @permission_classes([])
 def get_diagram_data(request):
     username          = request.GET['username']
-    enddate = datetime.today()
-    startdate = enddate - timedelta(days=365)
+    enddate = timezone.now().date()
+    startdate = enddate - timedelta(days=366)
     
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
     if df_manageClient.shape[0] == 0:
@@ -99,7 +99,7 @@ def get_diagram_data(request):
     DB_client = df_manageClient.iloc[0]['database_name']
     session   = Session.objects.using(DB_client).values()
     webevent  = WebEvent.objects.using(DB_client).\
-                                filter(created_at__range = [startdate, enddate]).values()
+                                filter(created_at__range = [startdate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00', enddate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00']).values()
     itemevent = EventItem.objects.using(DB_client).values()
     if (not  session) or (not webevent) or (not itemevent):
             return Response({"Chưa có dữ liệu"})
@@ -115,16 +115,25 @@ def get_diagram_data(request):
     groupby_object = df.groupby(['event_type', pd.Grouper(key = "created_at",freq="1D")])
     result   = groupby_object.size().reset_index(name='counts')
 
-    result_click = result[result["event_type"] == "Click"][["created_at","counts"]]
-    result_atc = result[result["event_type"] == "Add to cart"][["created_at","counts"]]
-    result_rfc = result[result["event_type"] == "Remove from cart"][["created_at","counts"]]
-    result_view = result[result["event_type"] == "View"][["created_at","counts"]]
-    result_login = result[result["event_type"] == "Login"][["created_at","counts"]]
-    return Response({'message':{'Click':result_click,
-                                'Add to cart':result_atc,
-                                'Remove from cart':result_rfc,
-                                'View':result_view,
-                                'Login':result_login} })
+    result_click = result[result["event_type"] == "Click"][["created_at","counts"]].copy()
+    result_atc = result[result["event_type"] == "Add to cart"][["created_at","counts"]].copy()
+    result_rfc = result[result["event_type"] == "Remove from cart"][["created_at","counts"]].copy()
+    result_view = result[result["event_type"] == "View"][["created_at","counts"]].copy()
+    result_login = result[result["event_type"] == "Login"][["created_at","counts"]].copy()
+
+    idx = pd.date_range(pd.to_datetime(startdate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00'), pd.to_datetime(enddate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00'))
+    full_result_click  =  result_click.set_index('created_at').reindex(idx,fill_value=0).rename_axis('created_at').reset_index()
+    full_result_atc    =  result_atc.set_index('created_at').reindex(idx,fill_value=0).rename_axis('created_at').reset_index()
+    full_result_rfc    =  result_rfc.set_index('created_at').reindex(idx,fill_value=0).rename_axis('created_at').reset_index()
+    full_result_view   =  result_view.set_index('created_at').reindex(idx,fill_value=0).rename_axis('created_at').reset_index()
+    full_result_login  =  result_login.set_index('created_at').reindex(idx,fill_value=0).rename_axis('created_at').reset_index()
+   
+    full_result_click.created_at = full_result_click.created_at.dt.strftime('%Y-%m-%d')
+    return Response({'message':{'Click':full_result_click,
+                                'Add to cart':full_result_atc,
+                                'Remove from cart':full_result_rfc,
+                                'View':full_result_view,
+                                'Login':full_result_login} })
 
 
 @api_view(['GET'])

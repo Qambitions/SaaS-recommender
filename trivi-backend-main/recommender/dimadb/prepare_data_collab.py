@@ -64,7 +64,7 @@ def prepare_data(DB_client):
     df_ratings.drop_duplicates(inplace=True)
     df_ratings.reset_index(inplace = True)
     df_ratings.customer_id = df_ratings.customer_id.astype(str)
-    df_ratings.prod_category = df_ratings.category.astype(str)
+    df_ratings.category = df_ratings.category.astype(str)
     ratings = tf.data.Dataset.from_tensor_slices(to_dictionary(df_ratings))
 
     return unique_user_ids,unique_product_id,unique_product_category,product_popular_scores_buckets,products,ratings

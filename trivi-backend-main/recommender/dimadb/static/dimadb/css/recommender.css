@@ -37,19 +37,31 @@
     text-align: left; 
     border: 1px solid #000;
     border-radius: 20px;
+    
 }
 
+  
+  .recommend-container h3 {
+    margin: 10px 0;
+    text-align: center;
+    width: 80%;
+  }
+
+
 .recommend-image {
-    object-fit: fill; 
+    /* object-fit: fill;  */
     margin: 10px;
     padding-left: 20px;
+    width: 20%;
+    object-fit: cover;
 }
 
 .recommend-name {
-    margin: 15px; 
+    margin: 10px; 
     font-size: 15px; 
     font-weight: 500; 
     font-family: Gascogne, sans-serif; 
+    width: 70%;
 }
 
 .recommend-time {
