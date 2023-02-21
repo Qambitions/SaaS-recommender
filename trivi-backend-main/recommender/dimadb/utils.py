@@ -27,7 +27,7 @@ def add_df_model_with_some_fields(df, model,DB_client, right_fields=[]):
             # instance[j] = row[j]
             setattr(instance,j,row[j])
         objects_list.append(instance)
-    model.objects.using(DB_client).bulk_create(objects_list)
+    model.objects.using(DB_client).bulk_create(objects_list, ignore_conflicts=True)
 
 def add_more_information_for_product_id(list_product, DB_client):    
     df_product = pd.DataFrame(Product.objects.using(DB_client).values())
