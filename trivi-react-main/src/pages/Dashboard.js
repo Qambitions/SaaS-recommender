@@ -9,10 +9,11 @@ import MouseIcon from '@mui/icons-material/Mouse';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import FaceIcon from '@mui/icons-material/Face';
 import Header from "../component/Header";
+
 import LineChart from "../component/LineChart";
-// import GeographyChart from "../../components/GeographyChart";
-// import BarChart from "../../components/BarChart";
+
 import StatBox from "../component/StatBox";
 import ProgressCircle from "../component/ProgressCircle";
 import { domainPath } from "../constants/utils";
@@ -32,9 +33,10 @@ const Dashboard = () => {
   }])
 
 
+
   const changeFormat = (data) => {
     var result = [];
-    var icon = [<AddShoppingCartIcon />, <MouseIcon/>, <ShoppingCartCheckoutIcon/>, <RemoveRedEyeIcon/> ]
+    var icon = [<AddShoppingCartIcon />, <MouseIcon/>, <FaceIcon/>, <ShoppingCartCheckoutIcon/>, <RemoveRedEyeIcon/> ]
     for(var i=0;i<data.counts.length;i++)
             {
                 result[result.length] = { 
@@ -43,14 +45,15 @@ const Dashboard = () => {
                     "icon": icon[i]     
                 }; 
             }
-            return result;
+    
+    return result;
 
 }
 
   const fetchKeys = async(time) => {
     const url = domainPath + "dimadb/get-key-metrics/?time="+time+
                         "&username="+username;
-      const result = await fetch(url, {
+    await fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -58,14 +61,13 @@ const Dashboard = () => {
         }).then((res) => res.json())
         .then((data) => {
           setKeys(changeFormat(data.message));
-          return data;
-        }).catch((err) => alert("Please reload page and wait a second"));
+        }).catch((err) => console.log(err));
 
   }
 
   const fetchProducts = async(time) => {
     const url = domainPath + "dimadb/get-hot-items/?username="+username;
-      const result = await fetch(url, {
+     await fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -73,21 +75,86 @@ const Dashboard = () => {
         }).then((res) => res.json())
         .then((data) => {
           setProducts(data.message);
-          return data;
-        }).catch((err) => alert("Please reload page and wait a second"));
+          // return data;
+        }).catch((err) => console.log(err));
+        // alert("Please reload page and wait a second")
+  }
+  const [diagram, setDiagram] = useState([
+    {
+      id: "",
+      color:"",
+      data: [{
+        x:"",
+        y:""
+      }]
+    }
+  ])
 
+  const [filteredData, setFilteredData] = useState([])
+
+  const changeDiagramFormat = (data, time) => {
+    var result = [];
+    var colors = [tokens("dark").blueAccent[300], tokens("dark").greenAccent[500], tokens("dark").redAccent[200], tokens("dark").grey[200], tokens("dark").primary[200] ]
+    var id = ["Add to cart", "Click","Login", "Remove from cart", "View"]
+ 
+
+    for(var i=0;i<5;i++)
+    {
+        var iData = [];
+        if (data[id[i]].counts.length!=0){
+          for (var j=0; j<data[id[i]].counts.length; j++){
+            iData[iData.length] = {
+              "x":  moment(data[id[i]].created_at[j]).format("YYYY-MM-DD"),
+              "y": data[id[i]].counts[j] , 
+            }
+          }
+          let filteredData = iData;
+          if (time != "year") {
+            filteredData = iData.filter((item) => {
+              const month = new Date(item.x).getMonth();
+              return month === time;
+            });
+          }
+          
+          result[result.length] = {  
+            "id" : id[i],
+            "color": colors[i],
+            "data": filteredData
+        }; 
+        }
+        
+       
+    }
+      return result;
   }
 
+  const fetchDiagram = async() => {  
+    const url = domainPath + "dimadb/get-diagram-data/?username="+username;
+    console.log("Time: ", time);
+    const result = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) => res.json())
+    .then((data) => {
+      setDiagram(data.message)
+      setFilteredData(changeDiagramFormat(data.message, time))
+      return data;
+    }).catch((err) => console.log(err));
+
+ }
 
   useEffect(() => {   
-    fetchKeys("year").catch(console.error); 
-    fetchProducts("year").catch(console.error); 
+    fetchKeys("year"); 
+    fetchProducts("year"); 
+    fetchDiagram()
 
     }, []);
 
     const handleFilterChange = (e) => {
       setTime(e.target.value);
-      fetchKeys(e.target.value);
+      setFilteredData(changeDiagramFormat(diagram, e.target.value));
       
     }
 
@@ -111,9 +178,18 @@ const Dashboard = () => {
                   fullWidth     
                 >
                   <MenuItem value={"year"} >Year</MenuItem>
-                  <MenuItem value={"month"}>Month</MenuItem>
-                  <MenuItem value={"week"}>Week</MenuItem>
-
+                  <MenuItem value={0}>January</MenuItem>
+                  <MenuItem value={1}>February</MenuItem>
+                  <MenuItem value={2}>March</MenuItem>
+                  <MenuItem value={3}>April</MenuItem>
+                  <MenuItem value={4}>May</MenuItem>
+                  <MenuItem value={5}>June</MenuItem>
+                  <MenuItem value={6}>July</MenuItem>
+                  <MenuItem value={7}>August</MenuItem>
+                  <MenuItem value={8}>September</MenuItem>
+                  <MenuItem value={9}>October</MenuItem>
+                  <MenuItem value={10}>November</MenuItem>
+                  <MenuItem value={11}>December</MenuItem>
                 </Select>
             </InputGroup>
             </Form.Group>    
@@ -128,32 +204,30 @@ const Dashboard = () => {
         gap="20px"
       >
         {/* ROW 1 */}
-        {keys && keys.map((item, index) =>  
+         
           <Box
-          gridColumn="span 3"
+          gridColumn="span 2"
           backgroundColor={colors.primary[400]}
           display="flex"
           alignItems="center"
-          justifyContent="center"
-          key={index}
         >
+          {keys && keys.map((item, index) => 
           <StatBox
-            title={item.counts}
-            subtitle={item.event_type}
-            icon = {item.icon}
-            // icon={
-            //   <EmailIcon
-            //     sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-            //   />
-            // }
-          />
+          title={item.counts}
+          subtitle={item.event_type}
+          icon = {item.icon}
+          key={index}
 
+
+        /> 
+          )}
+          
         </Box>
-        )}
+        
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 8"
+          gridColumn="span 12"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
         >
@@ -173,20 +247,13 @@ const Dashboard = () => {
                 Captured event statistic
               </Typography>
             </Box>
-            <Box>
-              <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-              </IconButton>
-            </Box>
           </Box>
           <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={false}/>
+            <LineChart isDashboard={false} diagram={filteredData}/>
           </Box>
         </Box>
         <Box
-          gridColumn="span 4"
+          gridColumn="span 12"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
           overflow="auto"

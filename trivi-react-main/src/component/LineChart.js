@@ -1,82 +1,25 @@
 import React, { useEffect, useState} from "react";
 import { ResponsiveLine } from "@nivo/line";
-import { useTheme } from "@mui/material";
+import { Box, useTheme, Select, MenuItem, Button} from "@mui/material";
+import {  Form, InputGroup } from '@themesberg/react-bootstrap';
 import { tokens } from "../theme";
 import moment from "moment";
 import { domainPath } from "../constants/utils";
 
 
+const getRequiredDateFormat = (timeStamp, format = "YYYY-MM-DD") => {
+  return moment(timeStamp).format(format);
+};
 
-const LineChart = ({ isDashboard = false }) => {
 
+const LineChart = ({isDashboard = false, diagram}) => {
+  const username = localStorage.getItem('userName');
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const username = localStorage.getItem('userName');
-
-  const [diagram, setDiagram] = useState([
-    {
-      id: "",
-      color:"",
-      data: [{
-        x:"",
-        y:""
-      }]
-    }
-  ])
-
-
-  const changeFormat = (data) => {
-    var result = [];
-    var colors = [tokens("dark").blueAccent[300], tokens("dark").greenAccent[500], tokens("dark").redAccent[200], tokens("dark").grey[200], tokens("dark").primary[200] ]
-    var id = ["Add to cart", "Click","Login", "Remove from cart", "View"]
- 
-
-    for(var i=0;i<5;i++)
-    {
-        var iData = [];
-        if (data[id[i]].counts.length!=0){
-          for (var j=0; j<data[id[i]].counts.length; j++){
-            iData[iData.length] = {
-              "x":  moment(data[id[i]].created_at[j]).format("YYYY/MM/DD"),
-              "y": data[id[i]].counts[j]
-            }
-          }
-          result[result.length] = {  
-            "id" : id[i],
-            "color": colors[i],
-            "data": iData
-        }; 
-        }
-        
-       
-    }
-      return result;
-  }
-
-  const fetchDiagram = async() => {
-    const url = domainPath + "dimadb/get-diagram-data/?username="+username;
-    const result = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) => res.json())
-    .then((data) => {
-      console.log("Diagram 1 : ", changeFormat(data.message))
-      setDiagram(changeFormat(data.message))
-      return data;
-    }).catch((err) => console.log(err));
-
-  }
-
-  useEffect(() => {   
-    fetchDiagram().catch(console.error);
-
-    }, []);
 
   return (
-    <>
-    {diagram && <ResponsiveLine
+     <>
+     <ResponsiveLine
       data={diagram}
       theme={{
         axis: {
@@ -113,7 +56,13 @@ const LineChart = ({ isDashboard = false }) => {
       }}
       colors={isDashboard ? { datum: "color" } : { scheme: "nivo" }} // added
       margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
-      xScale={{ type: "point" }}
+      // xFormat="time:%Y-%m-%d %H:%M:%S"
+      // xScale={{ 
+      //   type: "point",
+      //   format: '%Y-%m-%d %H:%M:%S',
+      //   useUTC: false,
+      //   precision: 'month' 
+      // }}
       yScale={{
         type: "linear",
         min: "auto",
@@ -121,18 +70,27 @@ const LineChart = ({ isDashboard = false }) => {
         stacked: true,
         reverse: false,
       }}
-      yFormat=" >-.2f"
-      curve="catmullRom"
+      yFormat=" >-.0f"
+      curve="monotoneX"
       axisTop={null}
       axisRight={null}
       axisBottom={{
         orient: "bottom",
-        tickSize: 0,
-        tickPadding: 5,
-        tickRotation: 0,
+        tickRotation: 15,
         legend: isDashboard ? undefined : "Time", // added
         legendOffset: 36,
-        legendPosition: "middle",
+        legendPosition: "middle",    
+        // format: values => {
+        //   const mth = values.slice(0,2).toString();
+        //   console.log("value: ", mergedDataset, mth);
+        //   if (mergedDataset.includes(mth)) {
+        //     console.log("oke")
+        //     setMergedDataset(mergedDataset.filter(item => item !== mth));
+        //     return `${values}`;
+        //   } else return "";
+        format: values => {return ""}   
+       
+        // },   
       }}
       axisLeft={{
         orient: "left",
@@ -144,9 +102,37 @@ const LineChart = ({ isDashboard = false }) => {
         legendOffset: -40,
         legendPosition: "middle",
       }}
+
+      enableSlices="x"
+      sliceTooltip={({ slice }) => {
+        const date = slice.points[0].data.xFormatted;
+        return (
+          <div>
+            <strong>
+              {`Date: ${getRequiredDateFormat(date, "YYYY-MM-DD")}`}
+            </strong>
+            {slice.points.map(point => (
+              <div key={point.id}>
+                <strong style={{ color: point.serieColor }}>
+                  {`${point.serieId} ${point.data.yFormatted}`}
+                </strong>
+              </div>
+            ))}
+          </div>
+        );
+      }}
+      tooltipFormat={value => {
+        // console.log("value: ", value);
+
+        return value;
+      }}
+
+
+
+
       enableGridX={false}
       enableGridY={false}
-      pointSize={8}
+      pointSize={3}
       pointColor={{ theme: "background" }}
       pointBorderWidth={2}
       pointBorderColor={{ from: "serieColor" }}
@@ -178,9 +164,8 @@ const LineChart = ({ isDashboard = false }) => {
           ],
         },
       ]}
-    />}
-    
-    </>
+    />
+    </> 
   );
 };
 
