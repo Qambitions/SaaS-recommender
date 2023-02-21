@@ -227,10 +227,12 @@ def import_csv(request):
                 right_fields,df  = check_allow_fields(df,CustomerProfile)
                 if right_fields==False: return JsonResponse({'message':"import Fail"})
                 add_df_model_with_some_fields(df,CustomerProfile,DB_client,right_fields)
+                train_model_demographic(DB_client)
             elif table.upper() == 'PRODUCT':
                 right_fields,df  = check_allow_fields(df,Product)
                 if right_fields==False: return JsonResponse({'message':"import Fail"})
                 add_df_model_with_some_fields(df,Product,DB_client,right_fields)
+                train_model_contentbase(DB_client)
             else:
                 return JsonResponse({'message':"thiếu trường thông tin"})
             return JsonResponse({'message':"DONE"})
@@ -339,9 +341,10 @@ def add_scheduler(request):
     body_json = json.loads(request.body)
     list_append = []
     for i in body_json['scheduler']:
-        x = Scheduler(strategy = i['strategy'], cycle_time = i['cycle_time'], database_name = DB_client)
-        list_append.append(x)
-    Scheduler.objects.bulk_create(list_append)
+        # x = Scheduler(strategy = i['strategy'], cycle_time = i['cycle_time'], database_name = DB_client)
+        Scheduler.objects.update_or_create(strategy = i['strategy'],
+                                            database_name = DB_client,
+                                            defaults={'cycle_time':i['cycle_time']})
     
     return Response({"Done"})
 
@@ -494,6 +497,22 @@ def train_contentbase_model_api(request):
     except:
         return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
     train_model_contentbase(DB_client)
+    return Response({"Done"},status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def train_all_hot_model(request):
+    for database_name in settings.DATABASES:
+        train_model_hot(database_name)
+    return Response({"Done"},status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def train_all_contentbase_model(request):
+    for database_name in settings.DATABASES:
+        train_model_contentbase(database_name)
     return Response({"Done"},status=status.HTTP_200_OK)
 
 @api_view(['GET'])
