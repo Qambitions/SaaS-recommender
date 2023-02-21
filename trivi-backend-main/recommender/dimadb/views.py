@@ -65,7 +65,7 @@ def get_report(request):
                                 filter(created_at__range = [startdate, enddate]).values()
         itemevent = EventItem.objects.using(DB_client).values()
         if (not  session) or (not webevent) or (not itemevent):
-            return Response({"Chưa có dữ liệu"})
+            return Response({'message':"false"})
         session   = pd.DataFrame(session)      
         webevent  = pd.DataFrame(webevent)
         itemevent = pd.DataFrame(itemevent)
@@ -95,14 +95,14 @@ def get_diagram_data(request):
     
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(username=username).values())
     if df_manageClient.shape[0] == 0:
-        return Response({"Chưa có đăng ký"})
+        return Response({'message':"false"})
     DB_client = df_manageClient.iloc[0]['database_name']
     session   = Session.objects.using(DB_client).values()
     webevent  = WebEvent.objects.using(DB_client).\
                                 filter(created_at__range = [startdate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00', enddate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00']).values()
     itemevent = EventItem.objects.using(DB_client).values()
     if (not  session) or (not webevent) or (not itemevent):
-            return Response({"Chưa có dữ liệu"})
+            return Response({'message':"false"})
     session   = pd.DataFrame(session)      
     webevent  = pd.DataFrame(webevent)
     itemevent = pd.DataFrame(itemevent)
@@ -149,7 +149,7 @@ def get_list_hot_items(request):
     event_item =  pd.DataFrame(EventItem.objects.using(DB_client).all().values())
     
     if web_event.shape[0] == 0 or event_item.shape[0] == 0:
-        return Response({'message': "chưa có dữ liệu"})
+        return Response({'message':"false"})
 
     event_item.event_id = event_item.event_id.astype('int64')
     df = web_event.merge(event_item,how="left", on = 'event_id')
@@ -183,10 +183,10 @@ def get_key_metrics(request):
         return Response({"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
     webevent  = WebEvent.objects.using(DB_client).\
-                                filter(created_at__range = [startdate, enddate]).values()
+                                filter(created_at__range = [startdate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00', enddate.strftime('%Y-%m-%d %H:%M:%S')+'+00:00']).values()
     itemevent = EventItem.objects.using(DB_client).values()
     if (not itemevent) or (not webevent):
-            return Response({"Chưa có dữ liệu"})
+            return Response({'message':"false"})
     webevent  = pd.DataFrame(webevent)
     itemevent = pd.DataFrame(itemevent)
 
@@ -355,6 +355,7 @@ def get_capture(request):
     ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
     if ip_add is None:
         ip_add = request.META.get('REMOTE_ADDR')
+    print(ip_add)
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     if df_manageClient.shape[0] == 0:
         return Response({"Chưa có đăng ký"})

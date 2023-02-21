@@ -60,7 +60,9 @@ const Dashboard = () => {
           },
         }).then((res) => res.json())
         .then((data) => {
-          setKeys(changeFormat(data.message));
+          if (data.message != 'false')
+            setKeys(changeFormat(data.message))
+          
         }).catch((err) => console.log(err));
 
   }
@@ -74,7 +76,8 @@ const Dashboard = () => {
           },
         }).then((res) => res.json())
         .then((data) => {
-          setProducts(data.message);
+          if (data.message != 'false')
+            setProducts(data.message);
           // return data;
         }).catch((err) => console.log(err));
         // alert("Please reload page and wait a second")
@@ -131,16 +134,17 @@ const Dashboard = () => {
   const fetchDiagram = async() => {  
     const url = domainPath + "dimadb/get-diagram-data/?username="+username;
     console.log("Time: ", time);
-    const result = await fetch(url, {
+    await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
     }).then((res) => res.json())
     .then((data) => {
-      setDiagram(data.message)
-      setFilteredData(changeDiagramFormat(data.message, time))
-      return data;
+      if (data.message != 'false'){
+        setDiagram(data.message)
+        setFilteredData(changeDiagramFormat(data.message, time))
+      }
     }).catch((err) => console.log(err));
 
  }
@@ -205,24 +209,21 @@ const Dashboard = () => {
       >
         {/* ROW 1 */}
          
-          <Box
+        {keys && keys.map((item, index) => <Box
           gridColumn="span 2"
           backgroundColor={colors.primary[400]}
           display="flex"
           alignItems="center"
+          m="10px"
         >
-          {keys && keys.map((item, index) => 
           <StatBox
           title={item.counts}
           subtitle={item.event_type}
           icon = {item.icon}
           key={index}
-
-
         /> 
-          )}
-          
         </Box>
+        )}
         
 
         {/* ROW 2 */}

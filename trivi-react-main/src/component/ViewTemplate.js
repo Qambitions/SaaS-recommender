@@ -77,7 +77,8 @@ const ViewTemplate = (props) => {
                 // params: JSON.stringify(query),
               }).then((res) => res.json())
               .then((data) => {
-                setData(changeFormat(data.message))
+                if (data.message != 'false')
+                  setData(changeFormat(data.message))
                 
                 return data;
               }).catch((err) => alert("Please reload page and wait a second"));
