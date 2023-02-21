@@ -1,23 +1,17 @@
-from rest_framework import permissions, status
+from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from datetime import date, datetime, timedelta
-from django.forms.models import model_to_dict
-from django.db.models import Q, Count, F, Sum, Max, Min
-from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
+from django.db.models import Q
 from django.db import connections
 from django.db.utils import OperationalError
-from django.apps import apps
 from django.utils import timezone
 from django.http import JsonResponse
-from django.core.files.storage import default_storage
 from pathlib import Path
 from .serializers import *
 from .models import *
 from .utils import check_allow_fields,add_df_model_with_some_fields,add_more_information_for_product_id
 
-from slugify import slugify
 from .personalize_recommendation import predict_product_colab,train_model_colab,predict_model_hot,predict_model_demographic,train_model_demographic,train_model_hot,predict_model_contentbase,train_model_contentbase
 from .recommend_statistic import login_statistic, session_event_management
 from recommender import settings
@@ -26,7 +20,6 @@ import pandas as pd
 import random
 import json
 import os
-import dotenv
 import json
 import re
 import string
@@ -41,8 +34,6 @@ def id_generator(size=7, chars=string.ascii_uppercase + string.digits):
 base_dir = Path(__file__).resolve().parent.parent
 module_dir = os.path.dirname(__file__)
 
-# Initialize environment variables
-dotenv.load_dotenv(os.path.join(base_dir, '.env'))
 
 @api_view(['GET'])
 @authentication_classes([])
@@ -398,7 +389,7 @@ def get_capture(request):
     need_recommend = session_event_management(event_type=event_type, 
                             DB_client=DB_client,
                             user_id = df_user.iloc[0]['customer_id'],
-                            product_url = body_json['current_page'])
+                            product_url = body_json['next_page'])
     if event_type == 'Login':
         return Response({"message":"login","token":new_token})
     if need_recommend:
@@ -408,7 +399,7 @@ def get_capture(request):
         if statistic == 'demographic':
             list_product = predict_model_demographic(df_user.iloc[0]['customer_id'],DB_client = DB_client)
         if statistic == 'content':
-            product_filter = Product.objects.using(DB_client).filter(url=body_json['current_page'])
+            product_filter = Product.objects.using(DB_client).filter(url=body_json['next_page'])
             if product_filter:
                 product_id = product_filter.all()[0].product_id
                 list_product = predict_model_contentbase(product_id,DB_client = DB_client)

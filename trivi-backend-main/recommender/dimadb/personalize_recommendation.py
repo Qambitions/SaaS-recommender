@@ -213,7 +213,7 @@ def calculate_age(birthday):
 class DemographicModel():
     def __init__(self,DB_client):
         super().__init__()
-        df = pd.DataFrame(CustomerProfile.objects.using(DB_client).values('dob', 'gender','city'))
+        df = pd.DataFrame(CustomerProfile.objects.using(DB_client).values('customer_id','dob', 'gender','city'))
         # print(df)
         self.ready = True
         if df.shape[0] == 0:
@@ -222,8 +222,9 @@ class DemographicModel():
         df['age'] = df['dob'].apply(calculate_age)
         df['city_label']   = df['city'].rank(method='dense', ascending=True).astype(int)
         df['gender_label'] = df['gender'].rank(method='dense', ascending=True).astype(int)
-        self.data  = df[['city_label','gender_label','age']]
+        self.data  = df[['customer_id','city_label','gender_label','age']]
         self.model = KMeans(n_clusters=5)
+        
 
 class ContentBaseModel():
     def __init__(self,DB_client):
@@ -251,12 +252,12 @@ class ListModel(metaclass = SingletonMeta):
         self.list_model_contentbase = {}
         for database_name in settings.DATABASES:
             if database_name == 'default': continue
-            self.list_model_colab[database_name]       = RetailModel(database_name)
-            self.list_model_hot[database_name]         = HotModel(database_name)
-            self.list_model_demographic[database_name] = DemographicModel(database_name)
-            self.list_model_contentbase[database_name] = ContentBaseModel(database_name)
-        self.list_model_colab_loaded = {}
-        self.list_model_demographic_loaded  = {}
+            self.list_model_colab[database_name]                  = RetailModel(database_name)
+            self.list_model_hot[database_name]                    = HotModel(database_name)
+            self.list_model_demographic[database_name]            = DemographicModel(database_name)
+            self.list_model_contentbase[database_name]            = ContentBaseModel(database_name)
+        self.list_model_colab_loaded       = {}   
+        self.list_model_demographic_loaded = {}
     
     def func_train_model_colab(self, DB_client):
         model = RetailModel(DB_client)
@@ -280,7 +281,7 @@ class ListModel(metaclass = SingletonMeta):
     def func_train_model_demographic(self, DB_client):
         model_class = DemographicModel(DB_client)
         model = model_class.model
-        model.fit(model_class.data)
+        model.fit(model_class.data[['city_label','gender_label','age']])
         self.list_model_demographic[DB_client] = model_class
         name = id_generator()
         joblib.dump(model, './model/'+name)
@@ -290,34 +291,41 @@ class ListModel(metaclass = SingletonMeta):
 
     def load_model_colab(self,DB_client):
         predict_model = self.list_model_colab[DB_client]
+        if predict_model.ready == False:
+            self.list_model_colab_loaded[DB_client] = False
+            return
         #query path file
         recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "colab")
         max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
         record      = recomemnder.filter(created_at = max_time)
         if not record:
-            self.list_model_colab_loaded['DB_client'] = False
+            self.list_model_colab_loaded[DB_client] = False
             return
         path        = record[0].model_path
         predict_model.load_weights(path) 
-        self.list_model_colab_loaded['DB_client'] = predict_model
+        self.list_model_colab_loaded[DB_client] = predict_model
 
     def load_model_demographic(self, DB_client):
+        if self.list_model_demographic[DB_client].ready == False:
+            self.list_model_demographic_loaded[DB_client] = False
+            return
         predict_model = self.list_model_demographic[DB_client].model
         recomemnder = RecommenderModel.objects.using(DB_client).filter(model_type = "demo")
         max_time    = recomemnder.aggregate(max_time=Max('created_at'))['max_time']
         record      = recomemnder.filter(created_at = max_time)
         if not record:
-            self.list_model_demographic_loaded['DB_client'] = False
+            self.list_model_demographic_loaded[DB_client] = False
             return 
         path        = record[0].model_path
         predict_model = joblib.load(path)
-        self.list_model_demographic_loaded['DB_client'] = predict_model
+        self.list_model_demographic_loaded[DB_client] = predict_model
 
 def start_model():
     models = ListModel()
     for database_name in settings.DATABASES:
         if database_name == 'default': continue
         models.load_model_colab(database_name)
+        models.load_model_demographic(database_name)
 
 def to_dictionary(df):
     return {name: np.array(value) for name, value in df.items()}
@@ -416,10 +424,7 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     if predict_model == False:
         return "chưa có model"
 
-    df_cus = pd.DataFrame(CustomerProfile.objects.using(DB_client).values())
-    df_cus['age'] = df_cus['dob'].apply(calculate_age)
-    df_cus['city_label']   = df_cus['city'].rank(method='dense', ascending=True).astype(int)
-    df_cus['gender_label'] = df_cus['gender'].rank(method='dense', ascending=True).astype(int)
+    df_cus = models.list_model_demographic[DB_client].data
     df_cus['clustering']   = predict_model.predict(df_cus[['city_label','gender_label','age']])
     cluster_user = df_cus[df_cus['customer_id'] == user].iloc[0]['clustering']
     df_tmp = df_cus[df_cus['clustering'] == cluster_user]
@@ -440,7 +445,7 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     return result[:top_n]
 
 if 'runserver' in sys.argv:
-    # start_model()
+    start_model()
     ...
 
     

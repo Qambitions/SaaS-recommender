@@ -20,22 +20,12 @@ function getCookie(cname) {
   return "";
 }
 
-function generateUserToken(length) {
-  var result           = '';
-  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var charactersLength = characters.length;
-  for ( var i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
 function checkCookie() {
   let user = getCookie("recommender_cookie");
   return user
 }
 
-async function send_capture(token, path,current_page,text) {
+async function send_capture(token, path,current_page,next_page,text) {
   // console.log(path, token);
   // console.log('localhost:8000' + "/dimadb/get-capture/");
   try{
@@ -48,6 +38,7 @@ async function send_capture(token, path,current_page,text) {
           token: token,
           xpath : path,
           current_page: current_page,
+          next_page: next_page,
           text : text
         })
       }
@@ -151,7 +142,7 @@ function capture_event(e, previousUrl) {
     }
     //todo: check is right path before send (query)
     text = document.querySelector('input').value;
-    send_capture(checkCookie(), list.join(" > "),product_href,text)
+    send_capture(checkCookie(), list.join(" > "),product_href,window.location.href,text)
 
   }
 }

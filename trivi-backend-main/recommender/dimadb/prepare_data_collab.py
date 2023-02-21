@@ -1,9 +1,5 @@
 import os, warnings, sys
 
-sys.path.insert(0, '')
-
-warnings.filterwarnings('ignore')
-
 import pandas as pd
 import numpy  as np
 import tensorflow as tf
