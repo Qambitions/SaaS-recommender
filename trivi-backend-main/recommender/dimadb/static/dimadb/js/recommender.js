@@ -1,3 +1,5 @@
+IP_DOMAIN = 'http://localhost:8000'
+
 function setCookie(cname, cvalue, exdays) {
   const d = new Date();
   d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
@@ -30,8 +32,7 @@ async function send_capture(token, path,current_page,next_page,text) {
   // console.log('localhost:8000' + "/dimadb/get-capture/");
   try{
     response_api = await fetch(
-      // `http://localhost:8000/dimadb/get-capture?token=${token}&path=${path}`,
-      'http://localhost:8000/dimadb/get-capture/',
+      IP_DOMAIN + '/dimadb/get-capture/',
       {
         method: "POST",
         body: JSON.stringify({
@@ -50,9 +51,9 @@ async function send_capture(token, path,current_page,next_page,text) {
           setCookie("recommender_cookie", result['token'], 365);
         }
         if (result['message'] == "popup"){
-          // closePopup()
+          closePopup()
           showPopup(result['list_recommend'])
-          // setTimeout(closePopup, 20000);
+          setTimeout(closePopup, 5000);
           var span = document.getElementsByClassName("close_recommend_19clc")[0];
           span.onclick = function() {
             closePopup()
