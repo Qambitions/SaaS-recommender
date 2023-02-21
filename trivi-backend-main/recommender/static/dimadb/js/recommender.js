@@ -1,355 +1,150 @@
-async function getRecommendItems(url, itemType, recommendType) {
-  var recommendItems = {};
-  if (url) {
-    recommendItems = await fetch(
-      IP_DOMAIN + "/dimadb/get-list-recommend/?" + url,
+IP_DOMAIN = 'http://localhost:8000'
+
+function setCookie(cname, cvalue, exdays) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+  let expires = "expires="+d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function getCookie(cname) {
+  let name = cname + "=";
+  let ca = document.cookie.split(';');
+  for(let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function checkCookie() {
+  let user = getCookie("recommender_cookie");
+  return user
+}
+
+async function send_capture(token, path,current_page,next_page,text) {
+  // console.log(path, token);
+  // console.log('localhost:8000' + "/dimadb/get-capture/");
+  try{
+    response_api = await fetch(
+      IP_DOMAIN + '/dimadb/get-capture/',
       {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-        },
-      }
-    )
-      .then((result) => result.json())
-      .then((result) => {
-         return {
-            'itemType': itemType,
-            'recommendType': recommendType,
-            'items': result.items
-        }
+        method: "POST",
+        body: JSON.stringify({
+          token: token,
+          xpath : path,
+          current_page: current_page,
+          next_page: next_page,
+          text : text
         })
-      .catch((err) => []);
-  }
-
-  return recommendItems;
-}
-
-
-function getListView(containerId, res) {
-    const recommendItems = res.items;
-    const itemType = res.itemType;
-    const recommendType = res.recommendType;
-    if (recommendItems.length) {
-      title = `Les ${itemType == "events" ? "événements" : "articles"}`;
-
-      if (recommendType == "Most popular") {
-        title += " les plus populaires";
-      } else if (recommendType == "Upcoming") {
-        title += " à venir";
-      } else {
-        title += " connexes";
-      }
-
-      document.getElementById(containerId).innerHTML += `
-                <div class="recommend">
-                    <h2 class="recommend-title">${title}</h2>
-                    <div class="recommend-content" id="${title}">
-                    </div>
-                </div>
-            `;
-
-      for (item of recommendItems) {
-        document.getElementById(title).innerHTML += `
-                    <div class="recommend-container">
-                        <img src="${item.img}" class="recommend-image"/>
-                        <p class="recommend-name">
-                            ${
-                              itemType == "events"
-                                ? item.event_name
-                                : item.product_name
-                            }
-                        </p>
-                        ${
-                          itemType == "events"
-                            ? `<div class="recommend-time">
-                            <div>${item.next_date ? item.next_date.substring(0, 10) + "-" + item.location_name : item.location_name}</div>
-                        </div>`
-                            : ""
-                        }
-                        <div class="recommend-type">
-                            <div>${
-                              itemType == "events"
-                                ? item.event_type.toUpperCase()
-                                : item.product_type.toUpperCase()
-                            }</div>
-                        </div>
-                        <a href="${item.url}" class="zoom">
-                            En savoir plus &#x2192;
-                        </a>
-                    </div>
-                `;
-      }
-    }
-}
-
-function generateRecommendAPI(
-  itemType = "",
-  level = "",
-  domain = "",
-  itemId = "",
-  recommendType = "",
-  quantity = 0
-) {
-  var api = "";
-
-  api += "itemType=" + itemType;
-  api += "&level=" + level;
-  api += "&quantity=" + quantity;
-
-  if (domain) api += "&domain=" + domain;
-  if (itemId) api += "&itemId=" + itemId;
-
-  if (recommendType != "Similar") api = api + "&recommendType=" + recommendType;
-
-  return api;
-}
-
-function getItemType(locationUrl) {
-  const articleTags = ["magazine", "product"];
-  const eventTags = ["evenements", "event"];
-  const locationParts = locationUrl.split("/");
-  var itemType = "";
-
-  for (const tag of articleTags) {
-    if (locationParts.includes(tag)) {
-      itemType = "products";
-      break;
-    }
-  }
-
-  for (const tag of eventTags) {
-    if (locationParts.includes(tag)) {
-      itemType = "events";
-      break;
-    }
-  }
-
-  return itemType;
-}
-
-function getDomain(itemType, locationUrl) {
-  const articleTypes = [
-    "arts-de-la-scene",
-    "arts-mediatiques",
-    "arts-visuels",
-    "litterature",
-    "metiers-dart",
-    "musees",
-    "patrimoine",
-  ];
-  const eventTypes = ["chanson", "humour", "cinema", "musique", "varietes"];
-  const locationParts = locationUrl.split("/");
-  var domain = "";
-
-  if (itemType == "products") {
-    for (const type of articleTypes) {
-      if (locationParts.includes(type)) {
-        domain = type;
-        break;
-      }
-    }
-  } else if (itemType == "events") {
-    for (const type of eventTypes) {
-      if (locationParts.includes(type)) {
-        domain = type;
-        break;
-      }
-    }
-  }
-  return domain;
-}
-
-function getRecommendLevel(domain, locationUrl) {
-  const articleTags = ["magazine", "product"];
-  const eventTags = ["evenements", "event"];
-  const locationParts = locationUrl.split("/");
-  const lastLocationPart = locationParts[locationParts.length - 1];
-  var level = "";
-
-  if (lastLocationPart == domain && domain != "") {
-    level = "Domain";
-  } else if (
-    lastLocationPart != "" &&
-    !eventTags.includes(lastLocationPart) &&
-    !articleTags.includes(lastLocationPart)
-  ) {
-    level = "Item";
-  } else {
-    level = "Homepage";
-  }
-  return level;
-}
-
-function getItemId(level, locationUrl) {
-  const locationParts = locationUrl.split("/");
-  const lastLocationPart = locationParts[locationParts.length - 1];
-  var itemId = "";
-
-  if (level == "Item") itemId = lastLocationPart;
-
-  return itemId;
-}
-
-function getMostPopularItems(
-  itemType = "",
-  level = "",
-  domain = "",
-  quantity = 0
-) {
-  const recommendType = "Most popular";
-  const api = generateRecommendAPI(
-    itemType,
-    level,
-    domain,
-    "",
-    recommendType,
-    quantity
-  );
-  const items = getRecommendItems(api, itemType, recommendType);
-
-  return items;
-}
-
-function getUpComingItems(
-  itemType = "",
-  level = "",
-  domain = "",
-  quantity = 0
-) {
-  const recommendType = "Upcoming";
-  const api = generateRecommendAPI(
-    itemType,
-    level,
-    domain,
-    "",
-    recommendType,
-    quantity
-  );
-  const items = getRecommendItems(api, itemType, recommendType);
-
-  return items;
-}
-
-function getSimilarItems(itemType = "", itemId = "", quantity = 0) {
-  const recommendType = "Similar";
-  const api = generateRecommendAPI(
-    itemType,
-    "Item",
-    "",
-    "",
-    recommendType,
-    quantity
-  );
-  const items = getRecommendItems(api);
-
-  return items;
-}
-
-async function getRecommend(url, bearerToken) {
-  var recommendItems = {};
-  if (url) {
-    recommendItems = await fetch(url,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${bearerToken}`,
-        },
       }
     )
-      .then((result) => result.json())
-      .then((result) => {
-          return {
-            'itemType': result.itemType,
-            'recommendType': result.recommendType,
-            'items': result.items
+    .then((result) => result.json())
+    .then((result) => {
+        console.log(result)
+        if (result['message'] == "login"){
+          setCookie("recommender_cookie", result['token'], 365);
         }
-        })
-      .catch((err) => []);
+        if (result['message'] == "popup"){
+          closePopup()
+          showPopup(result['list_recommend'])
+          setTimeout(closePopup, 5000);
+          var span = document.getElementsByClassName("close_recommend_19clc")[0];
+          span.onclick = function() {
+            closePopup()
+          }
+        }
+        return result
+      })
+    .catch((err) => []);
   }
-
-  return recommendItems;
+    // console.log("api",response_api.json());
+  catch (error){
+    console.log(error)
+  }
+  
+  return []
+}
+function closePopup() {
+  var div_rec = document.getElementById("recommendations");
+  div_rec.innerHTML = ""
 }
 
+function showPopup(list_recommend) {
+  var div_rec = document.getElementById("recommendations");
+  var popup = document.createElement("div");
+  // popup.innerHTML = "This is a pop-up!";
+  popup.style.backgroundColor = "#FCF8E8";
+  popup.style.position = "fixed";
+  popup.style.bottom = "5%";
+  popup.style.right = "5%";
+  popup.style.padding = "20px";
+  popup.style.width = "600px";
+  popup.style.height = "250px";
+  popup.style.borderRadius = "5px";
+  popup.style.zIndex = "999";
+  popup.style.display = "block";
+  popup.style.overflow = "auto";
 
-async function getRecommendation(url, bearerToken) {
-  var recommendItems = [];
-  if (url) {
-    recommendItems = await fetch(url + '/?url=' + window.location.href,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${bearerToken}`,
-        },
-      }
-    )
-      .then((result) => result.json())
-      .then((result) => {return result})
-      .catch((err) => []);
+  popup.innerHTML += "<button class=\"close_recommend_19clc\"> X </button> "; 
+
+  n = (list_recommend.length);
+  var html="";
+
+  for(i = 0; i <= (n-1); i++)
+  {
+  var list = list_recommend[i];
+    html = "<div class=\"recommend-container\"><a href=\"" + list.url + "\" style=\"display: flex;\">" +
+          "<img src=\"" + list.image +"\"  width=\"50\" height=\"50\" class=\"recommend-image\">" + "<h3 class=\"recommend-name\">"+list.name+"</h3>"+
+          "</a></div>"
+    popup.innerHTML += html;
   }
 
-  return recommendItems;
+  div_rec.appendChild(popup)
+}  
+
+function debounce_leading(func, timeout = 300){
+  let timer;
+  return (...args) => {
+    if (!timer) {
+      func.apply(this, args);
+    }
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = undefined;
+    }, timeout);
+  };
 }
 
-
-function getListViews(recommendations) {
-  if (Array.isArray(recommendations)) {
-    for (var idx=0; idx < recommendations.length; idx++) {
-      const res = recommendations[idx];
-      const recommendItems = res.items;
-      const itemType = res.itemType;
-      const recommendType = res.recommendType;
-      if (recommendItems.length) {
-        title = `Les ${itemType == "events" ? "événements" : "articles"}`;
-  
-        if (recommendType == "Most popular") {
-          title += " les plus populaires";
-        } else if (recommendType == "Upcoming") {
-          title += " à venir";
-        } else {
-          title += " similaires";
-        }
-        var recommendDivId = `recommendation-${idx}`
-        document.getElementById("recommendations").innerHTML+= `<div id=${recommendDivId}></div>`
-        document.getElementById(recommendDivId).innerHTML += `
-                  <div class="recommend">
-                      <h2 class="recommend-title">${title}</h2>
-                      <div class="recommend-content" id="${title}">
-                      </div>
-                  </div>
-              `;
-  
-        for (item of recommendItems) {
-          document.getElementById(title).innerHTML += `
-                      <div class="recommend-container">
-                          <img src="${item.img}" class="recommend-image"/>
-                          <p class="recommend-name">
-                              ${
-                                itemType == "events"
-                                  ? item.event_name
-                                  : item.product_name
-                              }
-                          </p>
-                          ${
-                            itemType == "events"
-                              ? `<div class="recommend-time">
-                              <div>${item.next_date ? item.next_date.substring(0, 10) + "-" + item.location_name : item.location_name}</div>
-                          </div>`
-                              : ""
-                          }
-                          <div class="recommend-type">
-                              <div>${
-                                itemType == "events"
-                                  ? item.event_type.toUpperCase()
-                                  : item.product_type.toUpperCase()
-                              }</div>
-                          </div>
-                          <a href="${item.url}" class="zoom">
-                              En savoir plus &#x2192;
-                          </a>
-                      </div>
-                  `;
+function capture_event(e, previousUrl) {
+  var evt = e 
+  if (evt) {
+    if (evt.isPropagationStopped && evt.isPropagationStopped()) {
+      return;
+    }
+    var time = Math.floor(Date.now() / 1000);
+    var product_href = previousUrl;
+    console.log(product_href)
+    list = []
+    if (e.type == 'scroll')
+      list = ['scroll']
+    else {
+      var event_path   = evt.composedPath();
+      for (var i = 0; i < event_path.length; i++){
+        list.push(event_path[i].localName.toLowerCase())
+        if (event_path[i].localName.toLowerCase() == 'html'){
+          break;
         }
       }
     }
+    //todo: check is right path before send (query)
+    text = document.querySelector('input').value;
+    send_capture(checkCookie(), list.join(" > "),product_href,window.location.href,text)
+
   }
 }
