@@ -358,21 +358,22 @@ def get_capture(request):
     print(ip_add)
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     if df_manageClient.shape[0] == 0:
-        return Response({"Chưa có đăng ký"})
+        return Response({"message":"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
     body_json = json.loads(request.body)
+    
     
     # query metadata
     df_metadata =  pd.DataFrame(RecommenderStrategy.objects.using(DB_client).all().values())
     if df_metadata.shape[0] == 0:
-        return Response({"0 không có chiến lược"})
+        return Response({"message":"0 không có chiến lược"})
     # df_path = df_metadata[df_metadata.url == body_json['current_page']]
     df_path = df_metadata
     df_path['check_url'] = df_path['url'].apply(check_url,current_page = body_json['current_page'])
     df_path = df_path[df_path['check_url']==True]
     if df_path.shape[0] == 0:
-        return Response({"1 không có chiến lược ở trang này"})
-
+        return Response({"message":"1 không có chiến lược ở trang này"})
+   
     # check xpath
     click_path_send = body_json['xpath'].split(' > ')
     click_path_send = list(reversed(click_path_send))
@@ -383,11 +384,10 @@ def get_capture(request):
     df_path['check_path'] = df_path.xpath.apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
-        return Response({"2 không có chiến lược ở đường click"})
+        return Response({"message":"2 không có chiến lược ở đường click"})
     event_type = df_click['event_type'].iat[0]
     statistic = df_click['strategy'].iat[0]
     # print(event_type,statistic)
-    
     # todo: add session and event
     if event_type == 'Login':
         new_token = id_generator(14)
@@ -396,23 +396,23 @@ def get_capture(request):
         
     df_user = pd.DataFrame(Customer.objects.using(DB_client).filter(token=body_json['token']).values())
     if df_user.shape[0] == 0:
-        ran_num = random.randint(0,9)
+        ran_num = random.randint(0,10000)
         statistic = ""
-        if ran_num < 3:
+        if ran_num % 10 < 3:
             list_product = predict_model_hot(DB_client = DB_client)
             statistic = "hot"
-        elif ran_num > 8:  
+        elif ran_num % 10 > 6: 
             statistic = "contentbase"
             product_filter = Product.objects.using(DB_client).filter(url=body_json['next_page'])
             if product_filter:
                 product_id = product_filter.all()[0].product_id
                 list_product = predict_model_contentbase(product_id,DB_client = DB_client)
-        else: return Response({"3 không có user tương ứng"})
+        else: return Response({"message":"3 không có user tương ứng"})
 
         if isinstance(list_product, list): 
             info = add_more_information_for_product_id(list_product,DB_client)
-            return Response({'type':'colab','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
-        else: return Response({"3 không có user tương ứng"})
+            return Response({'type':statistic,'message': "popup","list_recommend":info},status=status.HTTP_200_OK)
+        else: return Response({"message":"3 không có user tương ứng"})
     
     
     need_recommend = session_event_management(event_type=event_type, 
@@ -438,7 +438,7 @@ def get_capture(request):
             info = add_more_information_for_product_id(list_product,DB_client)
             return Response({'type':statistic,'message': "popup","list_recommend":info},status=status.HTTP_200_OK)
 
-    return Response({"Nothing"})
+    return Response({"message":"Nothing"})
 
 @api_view(['POST'])
 @authentication_classes([])
@@ -455,9 +455,9 @@ def train_colab_model_api(request):
         else:
             DB_client = df_manageClient.iloc[0]['database_name']
     except:
-        return Response({"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response({"message":"Chưa có đăng ký"},status=status.HTTP_406_NOT_ACCEPTABLE)
     train_model_colab(DB_client)
-    return Response({"Done"},status=status.HTTP_200_OK)
+    return Response({"message":"Done"},status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @authentication_classes([])
