@@ -379,8 +379,8 @@ def get_capture(request):
     
     df_path['xpath'].replace( { r"\[[0-9]*\]" : "" }, inplace= True, regex = True)
     df_path['xpath'] = df_path['xpath'].str[1:]
-    df_path['xpath'] = df_path['xpath'].str.split('/')
-    df_path['check_path'] = df_path['xpath'].apply(check_path,click_path_send = click_path_send)
+    df_path['xpath'] = df_path.xpath.str.split('/')
+    df_path['check_path'] = df_path.xpath.apply(check_path,click_path_send = click_path_send)
     df_click = df_path[df_path['check_path']==True]
     if df_click.shape[0] == 0:
         return Response({"2 không có chiến lược ở đường click"})
@@ -396,7 +396,23 @@ def get_capture(request):
         
     df_user = pd.DataFrame(Customer.objects.using(DB_client).filter(token=body_json['token']).values())
     if df_user.shape[0] == 0:
-        return Response({"3 không có user tương ứng"})
+        ran_num = random.randint(0,9)
+        statistic = ""
+        if ran_num < 3:
+            list_product = predict_model_hot(DB_client = DB_client)
+            statistic = "hot"
+        elif ran_num > 8:  
+            statistic = "contentbase"
+            product_filter = Product.objects.using(DB_client).filter(url=body_json['next_page'])
+            if product_filter:
+                product_id = product_filter.all()[0].product_id
+                list_product = predict_model_contentbase(product_id,DB_client = DB_client)
+        else: return Response({"3 không có user tương ứng"})
+
+        if isinstance(list_product, list): 
+            info = add_more_information_for_product_id(list_product,DB_client)
+            return Response({'type':'colab','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
+        else: return Response({"3 không có user tương ứng"})
     
     
     need_recommend = session_event_management(event_type=event_type, 
@@ -420,7 +436,7 @@ def get_capture(request):
             list_product = predict_model_hot(DB_client = DB_client)
         if isinstance(list_product, list): 
             info = add_more_information_for_product_id(list_product,DB_client)
-            return Response({'type':'colab','message': "popup","list_recommend":info},status=status.HTTP_200_OK)
+            return Response({'type':statistic,'message': "popup","list_recommend":info},status=status.HTTP_200_OK)
 
     return Response({"Nothing"})
 
