@@ -32,6 +32,7 @@ def add_df_model_with_some_fields(df, model,DB_client, right_fields=[]):
 def add_more_information_for_product_id(list_product, DB_client):    
     df_product = pd.DataFrame(Product.objects.using(DB_client).values())
     res = []
+    if df_product.shape[0] == 0: return res
     for i in list_product:
         product = df_product[df_product['product_id'] == i]
         res.append({"id":product['product_id'].iat[0],

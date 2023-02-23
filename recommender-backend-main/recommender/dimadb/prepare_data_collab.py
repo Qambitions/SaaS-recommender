@@ -56,7 +56,7 @@ def prepare_data(DB_client):
     df_ratings = df_ratings.merge(df_product[["product_id","product_name","category"]], on = 'product_id')
     # print(df_ratings.info())
     # filter good event
-    df_ratings = df_ratings[(df_ratings.event_type == "Add to cart") | (df_ratings.event_type == "View")]
+    df_ratings = df_ratings[(df_ratings.event_type == "Add to cart") | (df_ratings.event_type == "View")| (df_ratings.event_type == "Click")]
 
     df_ratings = df_ratings[["product_name",	
                                 "customer_id", "price",	
