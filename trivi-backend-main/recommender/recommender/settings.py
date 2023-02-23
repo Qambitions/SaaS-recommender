@@ -11,6 +11,7 @@ from pathlib import Path
 import environ
 import pymysql
 import os
+import json
 
 # # Database connection
 pymysql.install_as_MySQLdb()
@@ -46,11 +47,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders', 
+    'corsheaders',
+    'dimadb', 
     'core.apps.CoreConfig',
 
     # Primary Apps
-    'dimadb',
 ]
 
 MIDDLEWARE = [
@@ -68,8 +69,10 @@ MIDDLEWARE = [
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAdminUser'
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
