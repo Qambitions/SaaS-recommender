@@ -38,7 +38,8 @@ async function send_capture(token, path,current_page,next_page,text) {
           xpath : path,
           current_page: current_page,
           next_page: next_page,
-          text : text
+          text : text,
+          ip : window.location.host,
         })
       }
     )

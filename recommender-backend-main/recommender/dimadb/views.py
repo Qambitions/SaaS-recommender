@@ -259,6 +259,7 @@ def add_recommender_strategy(request):
                                                                     defaults={'strategy':i['strategy']})
     return Response({"Done"})
 
+
 def check_path(x, click_path_send):
     if len(x) > len(click_path_send): 
         return False
@@ -341,7 +342,7 @@ def add_scheduler(request):
     body_json = json.loads(request.body)
     list_append = []
     for i in body_json['scheduler']:
-        Scheduler.objects.using(DB_client).update_or_create(strategy = i['strategy'],
+        Scheduler.objects.update_or_create(strategy = i['strategy'],
                                             database_name = DB_client,
                                             defaults={'cycle_time':i['cycle_time']})
     
@@ -351,9 +352,13 @@ def add_scheduler(request):
 @authentication_classes([])
 @permission_classes([])
 def get_capture(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
+    ip_add = ""
+    try:
+        body_json = json.loads(request.body)
+        ip_add = body_json['ip']
+    except:
+        ip_add = ""
+
     print(ip_add)
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     if df_manageClient.shape[0] == 0:
@@ -443,9 +448,13 @@ def get_capture(request):
 @authentication_classes([])
 @permission_classes([])
 def train_colab_model_api(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
+    ip_add = ""
+    try:
+        body_json = json.loads(request.body)
+        ip_add = body_json['ip']
+    except:
+        ip_add = ""
+        
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     try:
         if df_manageClient.shape[0] == 0:
@@ -462,9 +471,13 @@ def train_colab_model_api(request):
 @authentication_classes([])
 @permission_classes([])
 def train_demographic_model_api(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
+    ip_add = ""
+    try:
+        body_json = json.loads(request.body)
+        ip_add = body_json['ip']
+    except:
+        ip_add = ""
+
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     try:
         if df_manageClient.shape[0] == 0:
@@ -481,9 +494,13 @@ def train_demographic_model_api(request):
 @authentication_classes([])
 @permission_classes([])
 def train_hot_model_api(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
+    ip_add = ""
+    try:
+        body_json = json.loads(request.body)
+        ip_add = body_json['ip']
+    except:
+        ip_add = ""
+
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     try:
         if df_manageClient.shape[0] == 0:
@@ -500,9 +517,13 @@ def train_hot_model_api(request):
 @authentication_classes([])
 @permission_classes([])
 def train_contentbase_model_api(request):
-    ip_add = request.META.get('HTTP_X_FORWARDED_FOR')
-    if ip_add is None:
-        ip_add = request.META.get('REMOTE_ADDR')
+    ip_add = ""
+    try:
+        body_json = json.loads(request.body)
+        ip_add = body_json['ip']
+    except:
+        ip_add = ""
+
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
     try:
         if df_manageClient.shape[0] == 0:
