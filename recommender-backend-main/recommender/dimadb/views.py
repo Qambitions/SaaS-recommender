@@ -271,7 +271,7 @@ def check_path(x, click_path_send):
 def check_url_regex(url_pattern, current_page):
     pattern = url_pattern
     pattern = pattern.replace("{number}","[0-9]*")
-    pattern = pattern.replace("{any}","[\s\S]*")
+    pattern = pattern.replace("{string}","[\s\S]*")
     pattern = pattern.replace("/","\/")
     pattern += "\/END"
     current_page += "/END"
