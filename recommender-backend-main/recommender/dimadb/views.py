@@ -361,7 +361,6 @@ def get_capture(request):
 
     print(ip_add)
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
-    print("ttttt",body_json['current_page'], body_json['next_page'])
     if df_manageClient.shape[0] == 0:
         return Response({"message":"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
@@ -403,11 +402,12 @@ def get_capture(request):
     if df_user.shape[0] == 0:
         ran_num = random.randint(0,10000)
         statistic = ""
+        list_product = ""
         if ran_num % 10 < 3:
             list_product = predict_model_hot(DB_client = DB_client)
             statistic = "hot"
         elif ran_num % 10 > 6: 
-            statistic = "contentbase"
+            statistic = "content"
             product_filter = Product.objects.using(DB_client).filter(url=body_json['next_page'])
             if product_filter:
                 product_id = product_filter.all()[0].product_id

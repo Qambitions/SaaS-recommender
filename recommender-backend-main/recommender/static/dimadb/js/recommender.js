@@ -51,8 +51,8 @@ async function send_capture(token, path,current_page,next_page,text) {
         }
         if (result['popup'] == 'true'){
           closePopup()
-          showPopup(result['list_recommend'])
-          setTimeout(closePopup, 10000);
+          showPopup(result['list_recommend'],result['type'])
+          setTimeout(closePopup, 1000000);
           var span = document.getElementsByClassName("close_recommend_19clc")[0];
           span.onclick = function() {
             closePopup()
@@ -79,7 +79,7 @@ function closePopup() {
   div_rec.innerHTML = ""
 }
 
-function showPopup(list_recommend) {
+function showPopup(list_recommend, type) {
   var div_rec = document.getElementById("recommendations");
   var popup = document.createElement("div");
   // popup.innerHTML = "This is a pop-up!";
@@ -99,7 +99,14 @@ function showPopup(list_recommend) {
 
   n = (list_recommend.length);
   var html="";
+  var text = "";
 
+  if (type == "colab") text = "Có thể bạn sẽ thích"
+  else if (type == "demographic") text = "Những người khác đã thích";
+  else if (type == "content") text = "Sản phẩm liên quan";
+  else if (type == "hot") text = "Sản phẩm nổi bật";
+  popup.innerHTML += "<h3>" + text +"</h3>";
+  console.log("texttt",text)
   for(i = 0; i <= (n-1); i++)
   {
   var list = list_recommend[i];
@@ -164,10 +171,14 @@ var getParentAnchor = function (element) {
 
 function showPopup_onscreen(){
     if (localStorage.getItem("recommender_items")===null) return
-    showPopup(JSON.parse(localStorage.getItem("recommender_items")))
-    setTimeout(closePopup, 10000);
+    showPopup(JSON.parse(localStorage.getItem("recommender_items")),localStorage.getItem("recommender_type"))
+    setTimeout(closePopup, 20000);
     var span = document.getElementsByClassName("close_recommend_19clc")[0];
     span.onclick = function() {
       closePopup()
     }
 }
+
+
+
+//// done code
