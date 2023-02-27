@@ -361,6 +361,7 @@ def get_capture(request):
 
     print(ip_add)
     df_manageClient = pd.DataFrame(ManageAccount.objects.filter(token=ip_add).values())
+    print("ttttt",body_json['current_page'], body_json['next_page'])
     if df_manageClient.shape[0] == 0:
         return Response({"message":"Chưa có đăng ký"})
     DB_client = df_manageClient.iloc[0]['database_name']
@@ -415,7 +416,7 @@ def get_capture(request):
 
         if isinstance(list_product, list): 
             info = add_more_information_for_product_id(list_product,DB_client)
-            return Response({'type':statistic,'message': "popup","list_recommend":info},status=status.HTTP_200_OK)
+            return Response({'type':statistic,'message': "recommend", "popup":"true","list_recommend":info},status=status.HTTP_200_OK)
         else: return Response({"message":"3 không có user tương ứng"})
     
     
@@ -440,7 +441,7 @@ def get_capture(request):
             list_product = predict_model_hot(DB_client = DB_client)
         if isinstance(list_product, list): 
             info = add_more_information_for_product_id(list_product,DB_client)
-            return Response({'type':statistic,'message': "popup","list_recommend":info},status=status.HTTP_200_OK)
+            return Response({'type':statistic,'message': "recommend", "popup":"true","list_recommend":info},status=status.HTTP_200_OK)
 
     return Response({"message":"Nothing"})
 

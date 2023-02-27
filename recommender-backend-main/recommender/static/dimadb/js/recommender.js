@@ -49,7 +49,7 @@ async function send_capture(token, path,current_page,next_page,text) {
         if (result['message'] == "login"){
           setCookie("recommender_cookie", result['token'], 365);
         }
-        if (result['message'] == "popup"){
+        if (result['popup'] == 'true'){
           closePopup()
           showPopup(result['list_recommend'])
           setTimeout(closePopup, 10000);
@@ -57,6 +57,10 @@ async function send_capture(token, path,current_page,next_page,text) {
           span.onclick = function() {
             closePopup()
           }
+        }
+        if (result['message'] == "recommend"){
+          localStorage.setItem("recommender_items",JSON.stringify(result['list_recommend']));
+          localStorage.setItem("recommender_type",result['type']);
         }
         return result
       })
@@ -70,6 +74,7 @@ async function send_capture(token, path,current_page,next_page,text) {
   return []
 }
 function closePopup() {
+  localStorage.removeItem("recommender_items");
   var div_rec = document.getElementById("recommendations");
   div_rec.innerHTML = ""
 }
@@ -120,15 +125,15 @@ function debounce_leading(func, timeout = 300){
   };
 }
 
-function capture_event(e, previousUrl) {
+function capture_event(e, currentUrl,nextUrl) {
   var evt = e 
   if (evt) {
     if (evt.isPropagationStopped && evt.isPropagationStopped()) {
       return;
     }
     var time = Math.floor(Date.now() / 1000);
-    var product_href = previousUrl;
-    console.log(product_href)
+    if (nextUrl == "") nextUrl = window.location.href
+    console.log(currentUrl, nextUrl)
     list = []
     if (e.type == 'scroll')
       list = ['scroll']
@@ -143,7 +148,26 @@ function capture_event(e, previousUrl) {
     }
     //todo: check is right path before send (query)
     text = document.querySelector('input').value;
-    send_capture(checkCookie(), list.join(" > "),product_href,window.location.href,text)
-
+    res = send_capture(checkCookie(), list.join(" > "),currentUrl,nextUrl,text) 
   }
+}
+
+var getParentAnchor = function (element) {
+  while (element !== null) {
+    if (element.tagName && element.tagName.toUpperCase() === "A") {
+      return element;
+    }
+    element = element.parentNode;
+  }
+  return null;
+};
+
+function showPopup_onscreen(){
+    if (localStorage.getItem("recommender_items")===null) return
+    showPopup(JSON.parse(localStorage.getItem("recommender_items")))
+    setTimeout(closePopup, 10000);
+    var span = document.getElementsByClassName("close_recommend_19clc")[0];
+    span.onclick = function() {
+      closePopup()
+    }
 }
