@@ -13,9 +13,9 @@ from django.db.models import Q, Count, F, Sum, Max
 from asgiref.sync import sync_to_async
 from django.utils import timezone
 
-def login_statistic(DB_client, user_name, token):
+def login_statistic(DB_client, list_user_name, token):
     # print(user_name, token)
-    x = Customer.objects.using(DB_client).filter(username=user_name).update(token=token)
+    x = Customer.objects.using(DB_client).filter(username__in=list_user_name).update(token=token)
 
 def session_event_management(event_type, DB_client, user_id, product_url = ""):
     # get session

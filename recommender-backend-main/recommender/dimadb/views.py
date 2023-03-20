@@ -394,8 +394,10 @@ def get_capture(request):
     # print(event_type,statistic)
     # todo: add session and event
     if event_type == 'Login':
+        list_input = body_json['text'].split(" > ")
         new_token = id_generator(14)
-        login_statistic(DB_client,body_json['text'], new_token)
+        print(list_input)
+        login_statistic(DB_client, list_input, new_token)
         body_json['token'] = new_token
         
     df_user = pd.DataFrame(Customer.objects.using(DB_client).filter(token=body_json['token']).values())

@@ -154,8 +154,13 @@ function capture_event(e, currentUrl,nextUrl) {
       }
     }
     //todo: check is right path before send (query)
-    text = document.querySelector('input').value;
-    res = send_capture(checkCookie(), list.join(" > "),currentUrl,nextUrl,text) 
+    text = document.querySelectorAll('input');
+    var text_input = []
+    for (var i=0; i<text.length; i++){
+      text_input.push(text[i].value)
+    }
+
+    res = send_capture(checkCookie(), list.join(" > "),currentUrl,nextUrl,text_input.join(" > ")) 
   }
 }
 
