@@ -437,6 +437,8 @@ def predict_model_demographic(user, top_n=3, DB_client = ""):
     event_item.event_id = event_item.event_id.astype('int64')
     df = session.merge(web_event,how='inner', on = 'session_id')
     df = df.merge(event_item,how='inner', on = 'event_id')
+    if df.shape[0] < 1000:
+        return "chưa đủ dữ liệu"
     groupby_object = df.groupby(by=['product_id'], as_index=True, sort=False)
     result   = groupby_object.size().reset_index(name='counts')
     result   = result.sort_values(by=['counts'],ascending=False)
